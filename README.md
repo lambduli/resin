@@ -17,7 +17,7 @@ TODO: How to build and how to use.
 
 > Q: Why does this exist?
 
-> A: For me to learn about things, implement them to make sure I learned them right, and write about them to make sure that I really got it right (and also to share the experience, knowledge and fun).
+> A: For me to learn about things, to implement those things (to make sure I learned them right), and to write about them (to make sure that I really got it right), and also to share the experience, knowledge and fun.
 
 
 ## Resources
