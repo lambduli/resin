@@ -91,6 +91,12 @@ to'nnf (Negation (Exists var sentence))
 data SAV
 
 
+{-  This function renames all bound variables in every clause in such a way
+    that all binder bind a uniquely named variable.
+
+    This function keeps around a local state to record what variable names are already used.
+-}
+
 to'sav :: Sentence a -> Sentence SAV
 to'sav = undefined
 
@@ -98,6 +104,9 @@ to'sav = undefined
 -- Skolem Normal Form
 data SNF
 
+
+{-  This function eliminates ∃ quantifiers.
+-}
 
 to'snf :: Sentence SAV -> Sentence SNF
 to'snf = undefined
