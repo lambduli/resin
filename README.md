@@ -1,6 +1,6 @@
 # Resin
 
-An implementation of a toy *automated theorem prover* for *FOL* built on *resolution*.
+An implementation of a toy *automated theorem prover* for *classical FOL* built on *resolution*.
 
 
 ## What does this project implement?

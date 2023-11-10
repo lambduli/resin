@@ -4,7 +4,7 @@ module Main where
 import Prelude hiding ( negate )
 
 import System.IO ( hFlush, stdout, openFile, IOMode(ReadMode), hGetContents )
-import Control.Monad ( mapM )
+import Control.Monad ( mapM_ )
 import Data.List qualified as List
 import Data.List.Extra ( trim )
 
@@ -157,7 +157,7 @@ repl = do
       -- let tokens = use'lexer read'token file'content
       -- putStrLn $! "all the tokens:\n" ++ List.intercalate "\n" (map show tokens)
       let theorems = parse'theorems file'content
-      mapM try'to'prove theorems
+      mapM_ try'to'prove theorems
       repl
 
     ':' : _ -> do
