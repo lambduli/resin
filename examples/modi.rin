@@ -1,0 +1,11 @@
+theorem modus-ponens: ∃ x P(x) ∧ Q(x)
+                    , ∀ x P(x) ∧ Q(x) => K(x)
+                    ⊢ ∃ x K(x) .
+
+
+theorem modus-tollens : ∀ x A(x) => B(x)
+                      , ∀ y ¬B(y)
+                      ⊢ ∀ z ¬A(z) .
+
+% TODO: translate some Prolog programs (from my Plover and Minilog projects) into
+%       pure FOL formula.

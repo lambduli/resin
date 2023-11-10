@@ -1,17 +1,28 @@
 # TODO
 
-- [ ] Conversion to CNF
-- [ ] *Given Clause Algorithm*
+- [ ] Lexer
+- [ ] Parser
+- [ ] REPL
+  - [ ] the theorem prover mode
+  - [ ] the command over formula mode
+- [ ] Support for existential queries (should give constructive answers)
 
 
-## The Algorithm as described in the Book
+## Representation of the FOL Formulae
 
-What we need:
+There are *Terms*.
+Those are quantifiable *variables* like `x` and `y`, and *functions*.
+Functions can be nullary—those don't take any arguments. We call them constants.
 
-- a function that renames all bound variables in a clause (to unique names)
-- a function that unifies all the literals in a list/set together; fails or produces a *substitution*
-- a function that tests whether two literals are unifiable
-- a function that produces a collection of resolvents for given *two clauses*
-- a function that drives the resolution—it start with a bunch of clauses in `unused` and none at `used` and does the *given clause algorithm*
-- a function that takes a bunch of clauses (a formula) and transforms them into CNF
-- the main function that delegates all the work
+There are *FOL Atomic Propositions*.
+Those represent relations.
+They can have one or multiple *Terms* for arguments or they can be nullary.
+The nullary ones are *Propositional Variables*. Or maybe rather *constants*.
+They are some non-parametrized propositions. Like *sky is blue* or so.
+
+There are also *logical connectives*.
+However, we can make an argument that we don't really need those as
+a formula in CNF is a collection of *disjuncts*.
+Those, in turn are collections of *FOL Atomic Propositions*.
+So we could do without representing connectives in our *core* data type.
+

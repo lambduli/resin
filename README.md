@@ -22,4 +22,4 @@ TODO: How to build and how to use.
 
 ## Resources
 
-TODO: *Handbook of Practical Logic and Automated Reasoning*
+[Handbook of Practical Logic and Automated Reasoning](https://www.cl.cam.ac.uk/~jrh13/atp/)

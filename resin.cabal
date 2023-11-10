@@ -63,8 +63,12 @@ library
 
     -- Modules exported by the library.
     exposed-modules:
-        CNF
-        Sentence
+        Formula
+        Lexer
+        Lib
+        Parser
+        Syntax
+        Token
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -73,7 +77,17 @@ library
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.17.1.0
+    build-depends:
+        base ^>=4.17.1.0,
+        array >= 0.5.4.0,
+        containers >=0.6.2.1,
+        directory,
+        extra,
+        filepath,
+        hspec,
+        mtl,
+        transformers,
+        utf8-string,
 
     -- Directories containing source files.
     hs-source-dirs:   src
@@ -108,6 +122,8 @@ executable resin
 
     -- Base language which the package is written in.
     default-language: Haskell2010
+
+    default-extensions: NamedFieldPuns ImportQualifiedPost BangPatterns
 
 test-suite resin-test
     -- Import common warning flags.
