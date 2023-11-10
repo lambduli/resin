@@ -12,7 +12,7 @@ import Syntax ( Rel(..), Term(..), Formula(Atom, Not, And, Or, Impl, Eq, Forall,
 import Syntax qualified as S
 
 
-import Debug.Trace ( trace )
+-- import Debug.Trace ( trace )
 
 
 over'atoms :: (Rel -> b -> b) -> Formula -> b -> b
@@ -313,7 +313,7 @@ pull'quants fm = fm
 pull'q :: (Bool, Bool) -> Formula -> (String -> Formula -> Formula) -> (Formula -> Formula -> Formula) -> String -> String -> Formula -> Formula -> Formula
 pull'q (l, r) fm quant op x y p q
   = let z = variant x (fv fm)
-        p' = if l then subst (Map.singleton x (Var z)) p else q
+        p' = if l then subst (Map.singleton x (Var z)) p else p
         q' = if r then subst (Map.singleton y (Var z)) q else q
     in  quant z (pull'quants (op p' q'))
 
@@ -346,6 +346,7 @@ skolem :: Formula -> Set.Set String -> (Formula, Set.Set String)
 skolem fm@(Exists y p) fns
   = let xs  = Set.toList $! fv fm
         f   = variant (if List.null xs then "c_" ++ y else "f_" ++ y) fns
+        -- f'  = trace ("skolem of: " ++ show fm ++ "\n  | f= " ++ show f) f
         fx  = Fn f (map (\ x -> Var x) xs)
     in  skolem (subst (Map.singleton y fx) p) (f `Set.insert` fns)
 skolem fm@(Forall x p) fns
@@ -517,31 +518,40 @@ res'loop (_, []) = False -- the book raises an error, I don't see why
 res'loop (used, (cl : cls))
   = let used' = cl : used
         resolvents = map (resolve'clauses cl) used'
-        resolvents' = trace ("the resolvents: " ++ show resolvents) resolvents
-        news = foldl' (Set.union) Set.empty resolvents
-        news' = trace ("news: " ++ show news) news
+        -- resolvents' = trace ("the resolvents: " ++ show resolvents) resolvents
+        news = foldl' Set.union Set.empty resolvents
+        -- news' = trace ("news: " ++ show news) news
     in  if [] `List.elem` news then True else res'loop (used', cls ++ Set.toList news)
 
 
 pure'resolution' :: Formula -> Bool
-pure'resolution' fm = res'loop ([], simp'cnf . skolemize . generalize $! fm)
+pure'resolution' fm = 
+  let skolemized = skolemize . generalize $! fm
+      -- fm' = trace ("so skolemized formula: " ++ show skolemized) fm
+      -- fm'' = trace ("simplify fm= " ++ show (simplify fm)) fm'
+      -- fm''' = trace ("simplify and nnf = " ++ show (nnf . simplify $! fm)) fm''
+      -- fm'''' = trace ("fst $! skolem (nnf $! simplify fm) (Set.map fst (functions fm)) = " ++ show (fst $! skolem (nnf $! simplify fm) (Set.map fst (functions fm)))) fm'''
+  in  res'loop ([], simp'cnf . skolemize . generalize $! fm)
+
+
+resolution :: [Formula] -> Formula -> Bool
+resolution assumptions conclusion
+  = let neg'conclusion = negate conclusion
+        fm = list'conj (neg'conclusion : assumptions)
+        -- fm' = trace ("  |  assumptions: " ++ show assumptions ++ "\n  |  conclusion: " ++ show conclusion) fm
+        -- fm'' = trace ("        ||  formula for resolution: " ++ show fm) fm'
+    in  pure'resolution' fm
 
 
 -- pure'resolution :: Formula -> Bool
 -- pure'resolution fm = res'loop ([], simp'cnf fm)
 
 
+-- pure'resolution :: Formula -> Bool
+-- pure'resolution fm = res'loop ([], simp'cnf (specialize (pnf fm)))
+
+
 -- resolution :: Formula -> [Bool]
 -- resolution fm
---   = let fm1 = skolemize (Not (generalize fm))
+--   = let fm1 = a'skolemize (Not (generalize fm))
 --     in  map (pure'resolution . list'conj) (simp'dnf fm1)
-
-
-pure'resolution :: Formula -> Bool
-pure'resolution fm = res'loop ([], simp'cnf (specialize (pnf fm)))
-
-
-resolution :: Formula -> [Bool]
-resolution fm
-  = let fm1 = a'skolemize (Not (generalize fm))
-    in  map (pure'resolution . list'conj) (simp'dnf fm1)

@@ -1,5 +1,5 @@
 {
-module Lexer ( lexer, read'token, use'lexer, eval'parser, Lexer(..) ) where
+module Lexer ( lexer, read'token, use'lexer, eval'parser, Lexer(..), AlexInput(..), Lexer'State(..) ) where
 
 import Control.Monad.State
 import Control.Monad.Error ( throwError )
@@ -13,6 +13,8 @@ import Token qualified as Token
 
 
 }
+
+%encoding "iso-8859-1"
 
 
 $upper                = [A-Z]
@@ -33,6 +35,13 @@ resin :-
 $space+                 ;
 
 "%".*\n                 ;
+
+"("                     { \_ -> token Token.Paren'Open }
+")"                     { \_ -> token Token.Paren'Close }
+"["                     { \_ -> token Token.Box'Open }
+"]"                     { \_ -> token Token.Box'Close }
+"{"                     { \_ -> token Token.Bracket'Open }
+"}"                     { \_ -> token Token.Bracket'Close }
 
 -- keywords
 ","                     { \_ -> token Token.Comma }
@@ -82,13 +91,6 @@ $space+                 ;
 "<==>"                  { \_ -> token Token.Equivalence }
 "⟺"                     { \_ -> token Token.Equivalence }
 
-
-"("                     { \_ -> token Token.Paren'Open }
-")"                     { \_ -> token Token.Paren'Close }
-"["                     { \_ -> token Token.Box'Open }
-"]"                     { \_ -> token Token.Box'Close }
-"{"                     { \_ -> token Token.Bracket'Open }
-"}"                     { \_ -> token Token.Bracket'Close }
 
 -- "_"                     { \_ -> token Token.Underscore }
 

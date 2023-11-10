@@ -31,6 +31,7 @@ data Token  = Upper'Var String
             | Underscore      -- _
             | Equal           -- =
             | EOF
+  deriving (Show, Eq)
 
 
 

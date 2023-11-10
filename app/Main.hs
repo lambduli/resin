@@ -1,12 +1,19 @@
 module Main where
 
 
+import Prelude hiding ( negate )
+
+import System.IO ( hFlush, stdout, openFile, IOMode(ReadMode), hGetContents )
+import Control.Monad ( mapM )
 import Data.List qualified as List
+import Data.List.Extra ( trim )
 
 
+
+import Lexer ( lexer, use'lexer, read'token )
 import Parser ( parse'theorems, parse'formula )
 import Syntax qualified as S
-import Lib ( resolution, pure'resolution, pure'resolution', pnf, specialize, generalize, a'skolemize, skolemize, simp'cnf, cnf, list'conj, simp'dnf, fv )
+import Lib ( resolution, {- pure'resolution , -} pure'resolution', pnf, specialize, generalize, a'skolemize, skolemize, simp'cnf, cnf, list'conj, simp'dnf, fv, negate, nnf )
 
 
 -- from the book:
@@ -131,31 +138,89 @@ example3 = S.Not example2
 
 main :: IO ()
 main = do
-  putStrLn "Hello, Resin!"
-  let formula = example3
-  let pure'result = pure'resolution formula
-  let pure'result' = pure'resolution' formula
-  putStrLn "pure resolution first:"
-  putStrLn $! "the formula: " ++ show formula
-  putStrLn $! "pnf of formula: " ++ show (pnf formula)
-  let a = specialize (pnf formula)
-  putStrLn $! "specialize . pnf $! formula: " ++ show a
-  let b = simp'cnf (specialize (pnf formula))
-  putStrLn $! "simp'cnf . specialize . pnf $! formula: " ++ show b
-  print pure'result
-  putStrLn "PURE RESOLUTION ' RESULT:"
-  print pure'result'
+  putStrLn "Resin — a toy automated theorem prover for classical First Order Logic."
+  repl
+  putStrLn "Bye!"
 
-  putStrLn $! "formula: " ++ show formula
-  putStrLn $! "S.Not (generalize formula): " ++ show (S.Not (generalize formula))
-  putStrLn $! "a'skolemize (Not (generalize formula)): " ++ show (a'skolemize (S.Not (generalize formula)))
-  let fm1 = (a'skolemize (S.Not (generalize formula)))
-  putStrLn $! "simp'dnf fm1: " ++ show (simp'dnf fm1)
-  putStrLn $! "map (cnf . list'conj) (simp'dnf formula): " ++ List.intercalate "\n" (map (show . cnf . list'conj) (simp'dnf fm1))
+
+repl :: IO ()
+repl = do
+  putStr "?- "
+  hFlush stdout
+  str <- getLine
+  case str of
+    ":q" -> return ()
+    ":Q" -> return ()
+    ':' : 'c' : 'h' : 'e' : 'c' : 'k' : file'path -> do
+      file'handle <- openFile (trim file'path) ReadMode
+      file'content <- hGetContents file'handle
+      -- let tokens = use'lexer read'token file'content
+      -- putStrLn $! "all the tokens:\n" ++ List.intercalate "\n" (map show tokens)
+      let theorems = parse'theorems file'content
+      mapM try'to'prove theorems
+      repl
+
+    ':' : _ -> do
+      putStrLn "I don't know this command, sorry."
+      repl
+
+    _ -> do
+      putStrLn "I don't understand this kind of input, sorry."
+      repl
+
+
+
+try'to'prove :: S.Theorem -> IO ()
+try'to'prove (S.Theorem { S.name = name
+                        , S.assumptions = assumptions
+                        , S.conclusion = conclusion }) = do
+  let is'valid = resolution assumptions conclusion
+  if is'valid
+  then do
+    putStrLn $! "✅ theorem `" ++ name ++ "' is logically valid"
+  else do
+    putStrLn $! "❌ theorem `" ++ name ++ "' is not logically valid"
+    putStrLn $! "            an interpretation where all the assumptions and `" ++ show (nnf . negate $! conclusion) ++ "' all hold is possible"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  -- putStrLn "Hello, Resin!"
+  -- let formula = example3
+  -- let pure'result = pure'resolution formula
+  -- let pure'result' = pure'resolution' formula
+  -- putStrLn "pure resolution first:"
+  -- putStrLn $! "the formula: " ++ show formula
+  -- putStrLn $! "pnf of formula: " ++ show (pnf formula)
+  -- let a = specialize (pnf formula)
+  -- putStrLn $! "specialize . pnf $! formula: " ++ show a
+  -- let b = simp'cnf (specialize (pnf formula))
+  -- putStrLn $! "simp'cnf . specialize . pnf $! formula: " ++ show b
+  -- print pure'result
+  -- putStrLn "PURE RESOLUTION ' RESULT:"
+  -- print pure'result'
+
+  -- putStrLn $! "formula: " ++ show formula
+  -- putStrLn $! "S.Not (generalize formula): " ++ show (S.Not (generalize formula))
+  -- putStrLn $! "a'skolemize (Not (generalize formula)): " ++ show (a'skolemize (S.Not (generalize formula)))
+  -- let fm1 = (a'skolemize (S.Not (generalize formula)))
+  -- putStrLn $! "simp'dnf fm1: " ++ show (simp'dnf fm1)
+  -- putStrLn $! "map (cnf . list'conj) (simp'dnf formula): " ++ List.intercalate "\n" (map (show . cnf . list'conj) (simp'dnf fm1))
   
-  let result = resolution formula
-  putStrLn "resolution now:"
-  print result
+  -- let result = resolution formula
+  -- putStrLn "resolution now:"
+  -- print result
 
 
 

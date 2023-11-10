@@ -1,10 +1,12 @@
 {
+{-# LANGUAGE FlexibleContexts #-}
+
 module Parser ( parse'theorems, parse'formula ) where
 
 import Control.Monad.Error
 import Control.Monad.State
 
-import Lexer ( lexer, eval'parser, Lexer(..) )
+import Lexer ( lexer, eval'parser, Lexer(..), AlexInput(..), Lexer'State(..) )
 import Token ( Token )
 import Token qualified as Token
 import Syntax ( Rel(..), Term(..), Formula(..), Theorem(..) )
@@ -81,6 +83,9 @@ Conclusion  ::  { Formula }
             :   Formula                     { $1 }
 
 
+-- TODO:  conjunction and disjunction should be stronger than implication and equivalence
+--        negation should be strongest
+--        conjunction > disjunction
 Formula     ::  { Formula }
             :   '⊤'                         { S.True }
             |   '⊥'                         { S.False }
@@ -112,6 +117,12 @@ TArgsSep    ::  { [Term] }
             |   {-  empty   -}              { [] }
 
 
+-- TArgsSep    ::  { [Term] }
+--             :   Term                        { [ $1 ] }
+--             |   TArgsSep ',' Term           { $3 : $1 }
+--             |   {-  empty   -}              { [] }
+
+
 Term        ::  { Term }
             :   LOWER                       { Var $1 }
             |   LOWER TermArgsM             { Fn $1 $2 }
@@ -128,8 +139,8 @@ parse'formula source = eval'parser parseFormula source
 
 
 parseError _ = do
-  -- col'no <- gets (inpColumn . lexerInput)
-  -- l'no <- gets (inpLine . lexerInput)
-  -- state <- get
-  error $ "Parse error on line " -- ++ show l'no ++ ", column " ++ show col'no ++ "." ++ "  " ++ show state
+  col'no <- gets (ai'col'no . lexer'input)
+  l'no <- gets (ai'line'no . lexer'input)
+  state <- get
+  error $ "Parse error on line " ++ show l'no ++ ", column " ++ show col'no ++ "." ++ "  "  ++ show (lexer'input state) -- ++ show state
 }
