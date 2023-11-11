@@ -9,131 +9,10 @@ import Data.List qualified as List
 import Data.List.Extra qualified as List
 
 
-
 import Lexer ( lexer, use'lexer, read'token )
 import Parser ( parse'theorems, parse'formula )
 import Syntax qualified as S
-import Lib ( resolution, {- pure'resolution , -} pure'resolution', pren'norm'form, pnf, specialize, generalize, a'skolemize, skolemize, skol'norm'form, simp'cnf, con'norm'form, cnf, list'conj, simp'dnf, fv, negate, neg'norm'form, nnf, needs'skolemisation )
-
-
--- from the book:
--- exists x. exists y. forall z.
-  --  (  F(x,y) ==> (F(y,z) ∧ F(z,z))  )
--- ∧
--- ((F(x,y) ∧ G(x,y)) ==> (G(x,z) ∧ G(z,z)))
-
--- This is the formula as understood and printed by the program:
--- (∃ x (∃ y (∀ z (
---                   F(x, y)
---                     ==>
---                   (F(y, z) ∧ F(z, z))
---                 ))))
---   ∧
---  (
---    (F(x, y) ∧ G(x, y))
---      ==> 
---    (G(x, z) ∧ G(z, z))
---  )
-
--- this is the PNF of the formula
--- (∃ x' (∃ y' (∀ z' ((¬F(x', y') ∨ (F(y', z') ∧ F(z', z'))) ∧ ((¬F(x, y) ∨ ¬G(x, y)) ∨ (G(x, z) ∧ G(z, z)))))))
-
--- this is the formula after being specialized and in prenex normal form
--- (∃ x' (∃ y' (∀ z' ((¬F(x', y') ∨ (F(y', z') ∧ F(z', z'))) ∧ ((¬F(x, y) ∨ ¬G(x, y)) ∨ (G(x, z) ∧ G(z, z)))))))
-
-
-example = S.Exists "x"
-            (S.Exists "y"
-              (S.Forall "z"
-                -- F(x, y) ==> (F(y, z) && F(z, z)
-                ( S.Atom (S.Rel "F" [S.Var "x", S.Var "y"])
-                    `S.Impl`
-                  (S.Atom (S.Rel "F" [S.Var "y", S.Var "z"]) `S.And` S.Atom (S.Rel "F" [S.Var "z", S.Var "z"]))
-                )
-                  --  &&
-                  `S.And`
-                -- (F(x, y) && G(x, y)) ==> (G(x, z) && G(z, z))
-                ( (S.Atom (S.Rel "F" [S.Var "x", S.Var "y"]) `S.And` S.Atom (S.Rel "G" [S.Var "x", S.Var "y"]))
-                    `S.Impl`
-                  (S.Atom (S.Rel "G" [S.Var "x", S.Var "z"]) `S.And` S.Atom (S.Rel "G" [S.Var "z", S.Var "z"]))
-                )
-                
-                
-                ))
-
-
--- P(x, y) ==> G(x, y)
---  ∧ P(x, y)
---  ∧ ¬G(x, y)
-example1 = ((S.Atom (S.Rel "P" [S.Fn "x" [], S.Fn "y" []])) `S.Impl` (S.Atom (S.Rel "G" [S.Fn "x" [], S.Fn "y" []]))) `S.And` (S.Atom (S.Rel "P" [S.Fn "x" [], S.Fn "y" []])) `S.And` (S.Not (S.Atom (S.Rel "G" [S.Fn "x" [], S.Fn "y" []])))
-
-
--- P(x, y) ==> G(x, y)
---  ∧ P(x, y)
---  ∧ G(x, y)
-example2 = (((S.Atom (S.Rel "P" [S.Fn "x" [], S.Fn "y" []])) `S.Impl` (S.Atom (S.Rel "G" [S.Fn "x" [], S.Fn "y" []]))) `S.And` (S.Atom (S.Rel "P" [S.Fn "x" [], S.Fn "y" []])) `S.And` ({- S.Not -} (S.Atom (S.Rel "G" [S.Fn "x" [], S.Fn "y" []]))))
-
-
--- NOT example2
--- eample two should be a logically valid formula
--- so this should be unsat formula and at least pure'resolution should find the contradiction
--- but pure resolution doesn't
--- it seems to me that the issue is—the negation of the valid formula example2
--- might not actually be an unsat?
--- P(x, y) ∨ ¬G(x, y) ∨ ¬P(x, y) ∨ ¬G(x, y)
--- I mean — this is clearly satisfiable formula.
--- It clearly isn't logically valid, but clearly it's not unsat.
-example3 = S.Not example2
-
--- let's take a look at the example1 again
--- P(x, y) ==> G(x, y) ∧ P(x, y) ∧ ¬G(x, y)
--- ¬P(x, y) ∨ G(x, y) ∧ P(x, y) ∧ ¬G(x, y)
--- 
-
--- the formula:
--- P(x, y) ==> G(x, y)
---   ∧
--- P(x, y)
---   ∧
--- ¬G(x, y)
-
-
--- the PNF of the formula:
--- ¬P(x, y) ∨ G(x, y)
---   ∧
--- P(x, y)
---   ∧
--- ¬G(x, y)
-
-
--- specialize and PNF of the formula:
--- ¬P(x, y) ∨ G(x, y)
---   ∧
--- P(x, y)
---   ∧
--- ¬G(x, y)
-
-
--- simp'cnf . specialize . pnf of formula:
--- this is a CNF so it's a CONJUNCTION of DISJUNCTIONS
--- { G(x, y) ∨ ¬P(x, y) } && { P(x, y) } && { ¬G(x, y) }
-
-
--- the resolution should do:
--- { G(x, y) ∨ ¬P(x, y) } `resolve with` { P(x, y) } giving:
--- { G(x, y) }
--- and that should lead to:
--- { G(x, y) } `resolve with` { ¬G(x, y) } giving:
--- {} aka ⊥
-
-
--- (G(x, z) ∧ G(z, z)) ∧ ¬(∀ x (∀ y (∃ z (F(x, y) ∧ (¬F(y, z) ∨ ¬F(z, z))))))
--- (¬F(x, y) ∧ ¬(∀ x (∀ y (∃ z (F(x, y) ∧ (¬F(y, z) ∨ ¬F(z, z)))))))
--- (¬G(x, y) ∧ ¬(∀ x (∀ y (∃ z (F(x, y) ∧ (¬F(y, z) ∨ ¬F(z, z)))))))
-
-
--- ¬(∀ x (∀ y (∀ z ((∃ x (∃ y (∀ z (F(x, y) ==> (F(y, z) ∧ F(z, z)))))) ∧ ((F(x, y) ∧ G(x, y)) ==> (G(x, z) ∧ G(z, z)))))))
-
+import Lib ( resolution, {- pure'resolution , -} pure'resolution', pren'norm'form, pnf, specialize, generalize, a'skolemize, skol'norm'form, simp'cnf, con'norm'form, list'conj, simp'dnf, fv, negate, neg'norm'form, nnf, needs'skolemisation )
 
 
 main :: IO ()
@@ -156,121 +35,60 @@ repl assumptions = do
 
 
     ':' : 'c' : 'h' : 'e' : 'c' : 'k' : ' ' : file'path -> do
-      file'handle <- openFile (List.trim file'path) ReadMode
-      file'content <- hGetContents file'handle
-      -- let tokens = use'lexer read'token file'content
-      -- putStrLn $! "all the tokens:\n" ++ List.intercalate "\n" (map show tokens)
-      let theorems = parse'theorems file'content
-      mapM_ try'to'prove theorems
-      repl assumptions
+      check assumptions file'path
 
     ':' : 'c' : 'h' : ' ' : file'path -> do
-      file'handle <- openFile (List.trim file'path) ReadMode
-      file'content <- hGetContents file'handle
-      -- let tokens = use'lexer read'token file'content
-      -- putStrLn $! "all the tokens:\n" ++ List.intercalate "\n" (map show tokens)
-      let theorems = parse'theorems file'content
-      mapM_ try'to'prove theorems
-      repl assumptions
-
+      check assumptions file'path
 
     ':' : 'a' : 's' : 's' : 'u' : 'm' : 'e' : ' ' : formula -> do
-      let fm = parse'formula formula
-      repl $! fm : assumptions
+      assume assumptions formula
 
     ':' : 'a' : ' ' : formula -> do
-      let fm = parse'formula formula
-      repl $! fm : assumptions
-
+      assume assumptions formula
 
     ':' : 's' : 'h' : 'o' : 'w' : _ -> do
       let context = List.intercalate "  ∧  " (map show assumptions)
       putStrLn context
       repl assumptions
-
-    -- ':' : 's' : 'h' : _ -> do
-    --   let context = List.intercalate "  ∧  " (map show assumptions)
-    --   putStrLn context
-    --   repl assumptions
-
     
     ':' : 'e' : 'n' : 't' : 'a' : 'i' : 'l' : 's' : ' ' : formula -> do
-      let fm = parse'formula formula
-      try'to'prove'anon assumptions fm
-      repl assumptions
+      entails assumptions formula
 
     ':' : 'e' : ' ' : formula -> do
-      let fm = parse'formula formula
-      try'to'prove'anon assumptions fm
-      repl assumptions
-
+      entails assumptions formula
 
     ':' : 'c' : 'o' : 'n' : 's' : 'i' : 's' : 't' : 'e' : 'n' : 't' : _ -> do
-      let fm = list'conj assumptions
-      if pure'resolution' fm
-      then do
-        putStrLn "❌ the current set of assumptions is not logically consistent"
-      else do
-        putStrLn "✅ the current set of assumptions is logically consistent"
-      repl assumptions
+      consistent assumptions
 
     ':' : 'c' : 'o' : 'n' : _ -> do
-      let fm = list'conj assumptions
-      if pure'resolution' fm
-      then do
-        putStrLn "❌ the current set of assumptions is not logically consistent"
-      else do
-        putStrLn "✅ the current set of assumptions is logically consistent"
-      repl assumptions
-
+      consistent assumptions
 
     ':' : 'c' : 'l' : 'e' : 'a' : 'r' : _ -> do
       repl [S.True]
 
-    -- ':' : 'c' : 'l' : _ -> do
-    --   repl [S.True]
-
-
     ':' : 's' : 'k' : 'o' : 'l' : 'e' : 'm' : 'i' : 'z' : 'e' : ' ' : formula -> do
-      let fm = parse'formula formula
-      putStrLn $! show (skol'norm'form fm)
-      repl assumptions
+      skolemize assumptions formula
 
     ':' : 's' : 'k' : 'o' : 'l' : ' ' : formula -> do
-      let fm = parse'formula formula
-      putStrLn $! show (skol'norm'form fm)
-      repl assumptions
-
+      skolemize assumptions formula
 
     ':' : 's' : 'i' : 'm' : 'p' : ' ' : formula -> do
       let fm = parse'formula formula
       putStrLn $! show fm
       repl assumptions
-
     
     ':' : 'c' : 'n' : 'f' : ' ' : formula -> do
-      let fm = parse'formula formula
-      if needs'skolemisation fm
-      then do
-        putStrLn "⚠️  I can't perform the CNF conversion on a non-propositional formula."
-        putStrLn "   The formula contains existential quantifiers."
-        putStrLn "   This would require skolemization, a process that might produce only a equisatisfiable formula."
-      else do
-        putStrLn $! show (con'norm'form fm)
-      repl assumptions
-
+      cnf assumptions formula
 
     ':' : 'n' : 'n' : 'f' : ' ' : formula -> do
       let fm = parse'formula formula
       putStrLn $! show (neg'norm'form fm)
       repl assumptions
 
-    
     ':' : 'p' : 'n' : 'f' : ' ' : formula -> do
       let fm = parse'formula formula
       putStrLn $! show (pren'norm'form fm)
       repl assumptions
-
 
     ':' : 't' : 'o' : 'k' : ' ' : input -> do
       let tokens = use'lexer read'token input
@@ -282,21 +100,16 @@ repl assumptions = do
       putStrLn $! show fm
       repl assumptions
 
-
     ':' : _ -> do
       putStrLn "I don't know this command, sorry."
       repl assumptions
 
-
     input | List.null (List.trim input) -> do
       repl assumptions
 
-
     --  Because what the prompt looks like, the `entails` check is the default.
     formula -> do
-      let fm = parse'formula formula
-      try'to'prove'anon assumptions fm
-      repl assumptions
+      entails assumptions formula
 
 
 try'to'prove :: S.Theorem -> IO ()
@@ -328,41 +141,54 @@ try'to'prove'anon assumptions conclusion = do
     putStrLn $! "            an interpretation where all the assumptions and `" ++ show (nnf . negate $! conclusion) ++ "' all hold is possible"
 
 
+check :: [S.Formula] -> String -> IO ()
+check assumptions file'path = do
+  file'handle <- openFile (List.trim file'path) ReadMode
+  file'content <- hGetContents file'handle
+  let theorems = parse'theorems file'content
+  mapM_ try'to'prove theorems
+  repl assumptions
 
 
+assume :: [S.Formula] -> String -> IO ()
+assume assumptions formula = do
+  let fm = parse'formula formula
+  repl $! fm : assumptions
 
 
+entails :: [S.Formula] -> String -> IO ()
+entails assumptions formula = do
+  let fm = parse'formula formula
+  try'to'prove'anon assumptions fm
+  repl assumptions
 
 
+consistent :: [S.Formula] -> IO ()
+consistent assumptions = do
+  let fm = list'conj assumptions
+  if pure'resolution' fm
+  then do
+    putStrLn "❌ the current set of assumptions is not logically consistent"
+  else do
+    putStrLn "✅ the current set of assumptions is logically consistent"
+  repl assumptions
 
 
+skolemize :: [S.Formula] -> String -> IO ()
+skolemize assumptions formula = do
+  let fm = parse'formula formula
+  putStrLn $! show (skol'norm'form fm)
+  repl assumptions
 
 
-  -- putStrLn "Hello, Resin!"
-  -- let formula = example3
-  -- let pure'result = pure'resolution formula
-  -- let pure'result' = pure'resolution' formula
-  -- putStrLn "pure resolution first:"
-  -- putStrLn $! "the formula: " ++ show formula
-  -- putStrLn $! "pnf of formula: " ++ show (pnf formula)
-  -- let a = specialize (pnf formula)
-  -- putStrLn $! "specialize . pnf $! formula: " ++ show a
-  -- let b = simp'cnf (specialize (pnf formula))
-  -- putStrLn $! "simp'cnf . specialize . pnf $! formula: " ++ show b
-  -- print pure'result
-  -- putStrLn "PURE RESOLUTION ' RESULT:"
-  -- print pure'result'
-
-  -- putStrLn $! "formula: " ++ show formula
-  -- putStrLn $! "S.Not (generalize formula): " ++ show (S.Not (generalize formula))
-  -- putStrLn $! "a'skolemize (Not (generalize formula)): " ++ show (a'skolemize (S.Not (generalize formula)))
-  -- let fm1 = (a'skolemize (S.Not (generalize formula)))
-  -- putStrLn $! "simp'dnf fm1: " ++ show (simp'dnf fm1)
-  -- putStrLn $! "map (cnf . list'conj) (simp'dnf formula): " ++ List.intercalate "\n" (map (show . cnf . list'conj) (simp'dnf fm1))
-  
-  -- let result = resolution formula
-  -- putStrLn "resolution now:"
-  -- print result
-
-
-
+cnf :: [S.Formula] -> String -> IO ()
+cnf assumptions formula = do
+  let fm = parse'formula formula
+  if needs'skolemisation fm
+  then do
+    putStrLn "⚠️  I can't perform the CNF conversion on a non-propositional formula."
+    putStrLn "   The formula contains existential quantifiers."
+    putStrLn "   This would require skolemization, a process that might produce only a equisatisfiable formula."
+  else do
+    putStrLn $! show (con'norm'form fm)
+  repl assumptions
