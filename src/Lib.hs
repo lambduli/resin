@@ -327,7 +327,7 @@ prenex fm = fm
 
 
 pnf :: Formula -> Formula
-pnf fm = prenex (nnf (simplify fm))
+pnf = prenex . nnf . simplify
 
 
 {-  Skolemisation   -}
@@ -542,6 +542,36 @@ resolution assumptions conclusion
         -- fm' = trace ("  |  assumptions: " ++ show assumptions ++ "\n  |  conclusion: " ++ show conclusion) fm
         -- fm'' = trace ("        ||  formula for resolution: " ++ show fm) fm'
     in  pure'resolution' fm
+
+
+neg'norm'form :: Formula -> Formula
+neg'norm'form = nnf . simplify
+
+
+pren'norm'form :: Formula -> Formula
+pren'norm'form = pnf . simplify
+
+
+skol'norm'form :: Formula -> Formula
+skol'norm'form = pnf . a'skolemize
+
+
+--  NOTE: I am skipping `pnf` there, I still think it should work, but it needs some testing.
+con'norm'form :: Formula -> Formula
+con'norm'form = specialize . prenex . a'skolemize -- roughly: skolem . nnf . simplify
+
+
+needs'skolemisation :: Formula -> Bool
+needs'skolemisation S.True = False
+needs'skolemisation S.False = False
+needs'skolemisation (Atom _) = False
+needs'skolemisation (Not p) = needs'skolemisation p
+needs'skolemisation (And p q) = needs'skolemisation p || needs'skolemisation q
+needs'skolemisation (Or p q) = needs'skolemisation p || needs'skolemisation q
+needs'skolemisation (Impl p q) = needs'skolemisation p || needs'skolemisation q
+needs'skolemisation (Eq p q) = needs'skolemisation p || needs'skolemisation q
+needs'skolemisation (Forall _ p) = needs'skolemisation p
+needs'skolemisation (Exists _ _) = True
 
 
 -- pure'resolution :: Formula -> Bool

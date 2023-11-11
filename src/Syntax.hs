@@ -5,7 +5,6 @@ import Prelude hiding ( True, False, And, Or )
 import Data.List ( intercalate )
 
 
-
 data Rel = Rel String [Term]            -- P(x, ƒ(x, y))
   deriving (Show, Eq, Ord)
 

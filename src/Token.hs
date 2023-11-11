@@ -32,8 +32,3 @@ data Token  = Upper'Var String
             | Equal           -- =
             | EOF
   deriving (Show, Eq)
-
-
-
-
-

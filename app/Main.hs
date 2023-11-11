@@ -13,7 +13,7 @@ import Data.List.Extra qualified as List
 import Lexer ( lexer, use'lexer, read'token )
 import Parser ( parse'theorems, parse'formula )
 import Syntax qualified as S
-import Lib ( resolution, {- pure'resolution , -} pure'resolution', pnf, specialize, generalize, a'skolemize, skolemize, simp'cnf, cnf, list'conj, simp'dnf, fv, negate, nnf )
+import Lib ( resolution, {- pure'resolution , -} pure'resolution', pren'norm'form, pnf, specialize, generalize, a'skolemize, skolemize, skol'norm'form, simp'cnf, con'norm'form, cnf, list'conj, simp'dnf, fv, negate, neg'norm'form, nnf, needs'skolemisation )
 
 
 -- from the book:
@@ -233,30 +233,53 @@ repl assumptions = do
 
     ':' : 's' : 'k' : 'o' : 'l' : 'e' : 'm' : 'i' : 'z' : 'e' : ' ' : formula -> do
       let fm = parse'formula formula
-      putStrLn $! show (skolemize fm)
+      putStrLn $! show (skol'norm'form fm)
       repl assumptions
 
     ':' : 's' : 'k' : 'o' : 'l' : ' ' : formula -> do
       let fm = parse'formula formula
-      putStrLn $! show (skolemize fm)
+      putStrLn $! show (skol'norm'form fm)
+      repl assumptions
+
+
+    ':' : 's' : 'i' : 'm' : 'p' : ' ' : formula -> do
+      let fm = parse'formula formula
+      putStrLn $! show fm
       repl assumptions
 
     
     ':' : 'c' : 'n' : 'f' : ' ' : formula -> do
       let fm = parse'formula formula
-      putStrLn $! show (cnf fm)
+      if needs'skolemisation fm
+      then do
+        putStrLn "⚠️  I can't perform the CNF conversion on a non-propositional formula."
+        putStrLn "   The formula contains existential quantifiers."
+        putStrLn "   This would require skolemization, a process that might produce only a equisatisfiable formula."
+      else do
+        putStrLn $! show (con'norm'form fm)
       repl assumptions
 
 
     ':' : 'n' : 'n' : 'f' : ' ' : formula -> do
       let fm = parse'formula formula
-      putStrLn $! show (nnf fm)
+      putStrLn $! show (neg'norm'form fm)
       repl assumptions
 
     
     ':' : 'p' : 'n' : 'f' : ' ' : formula -> do
       let fm = parse'formula formula
-      putStrLn $! show (pnf fm)
+      putStrLn $! show (pren'norm'form fm)
+      repl assumptions
+
+
+    ':' : 't' : 'o' : 'k' : ' ' : input -> do
+      let tokens = use'lexer read'token input
+      putStrLn $! "All the tokens:\n" ++ List.intercalate "\n  " (map show tokens)
+      repl assumptions
+
+    ':' : 'r' : 'e' : 'p' : 'e' : 'a' : 't' : ' ' : formula -> do
+      let fm = parse'formula formula
+      putStrLn $! show fm
       repl assumptions
 
 
@@ -269,8 +292,10 @@ repl assumptions = do
       repl assumptions
 
 
-    _ -> do
-      putStrLn "I don't understand this kind of input, sorry."
+    --  Because what the prompt looks like, the `entails` check is the default.
+    formula -> do
+      let fm = parse'formula formula
+      try'to'prove'anon assumptions fm
       repl assumptions
 
 

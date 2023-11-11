@@ -58,6 +58,7 @@ import Syntax qualified as S
 %nonassoc '<=>' '==>'
 %left '∨'
 %left '∧'
+%right '¬'
 
 %%
 
@@ -117,12 +118,6 @@ TArgsSep    ::  { [Term] }
             :   Term                        { [ $1 ] }
             |   Term ',' TArgsSep           { $1 : $3 }
             |   {-  empty   -}              { [] }
-
-
--- TArgsSep    ::  { [Term] }
---             :   Term                        { [ $1 ] }
---             |   TArgsSep ',' Term           { $3 : $1 }
---             |   {-  empty   -}              { [] }
 
 
 Term        ::  { Term }

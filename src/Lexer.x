@@ -11,6 +11,8 @@ import Data.List ( uncons )
 import Token ( Token )
 import Token qualified as Token
 
+import Debug.Trace ( trace )
+
 
 }
 
@@ -77,10 +79,12 @@ $space+                 ;
 
 "∧"                     { \_ -> token Token.And }
 "&&"                    { \_ -> token Token.And }
+"&"                     { \_ -> token Token.And }
 "AND"                   { \_ -> token Token.And }
 
 "∨"                     { \_ -> token Token.Or }
 "||"                    { \_ -> token Token.Or }
+"|"                     { \_ -> token Token.Or }
 "OR"                    { \_ -> token Token.Or }
 
 "=>"                    { \_ -> token Token.Implication }
@@ -145,6 +149,14 @@ alexGetByte input@Input{ ai'input }
                   , ai'col'no     = 1
                   , ai'last'char  = '\n'
                   , ai'input      = rest } )
+
+      advance ('∨', rest)
+        = ( fromIntegral (ord '|')
+          , Input { ai'line'no    = ai'line'no input
+                  , ai'col'no     = ai'col'no input + 1
+                  , ai'last'char  = '|'
+                  , ai'input      = rest } )
+        
       advance (c, rest)
         = ( fromIntegral (ord c)
           , Input { ai'line'no    = ai'line'no input
