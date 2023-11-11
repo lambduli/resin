@@ -2,7 +2,7 @@ theorem trivial: A, B ⊢ B.
 
 
 theorem modus-ponens: ∃ x P(x) ∧ Q(x)
-                    , ∀ x (P(x) ∧ Q(x)) => K(x)
+                    , ∀ x P(x) ∧ Q(x) => K(x)
                     ⊢ ∃ x K(x) .
 
 

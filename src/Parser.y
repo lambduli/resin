@@ -54,9 +54,13 @@ import Syntax qualified as S
   '_'         { Token.Underscore }
   '='         { Token.Equal }
 
+
+%nonassoc '<=>' '==>'
+%left '∨'
+%left '∧'
+
 %%
 
--- TODO: Continue from here!
 
 Theorems    ::  { [Theorem] }
             :   Theorem Theorems            { $1 : $2 }
@@ -83,9 +87,7 @@ Conclusion  ::  { Formula }
             :   Formula                     { $1 }
 
 
--- TODO:  conjunction and disjunction should be stronger than implication and equivalence
---        negation should be strongest
---        conjunction > disjunction
+
 Formula     ::  { Formula }
             :   '⊤'                         { S.True }
             |   '⊥'                         { S.False }

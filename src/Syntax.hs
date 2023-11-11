@@ -30,13 +30,13 @@ data Formula  = True                    -- ⊤
 
 instance Show Term where
   show (Var n) = n
-  show (Fn n []) = n ++ "ᶜ"
+  show (Fn n []) = n
   show (Fn n terms) = n ++ "(" ++ intercalate ", " (map show terms) ++ ")"
 
 
 instance Show Formula where
-  show True = "True"
-  show False = "False"
+  show True = "⊤"
+  show False = "⊤"
   show (Atom (Rel n [])) = n
   show (Atom (Rel n terms)) = n ++ "(" ++ intercalate ", " (map show terms) ++ ")"
   show (Not p) = "¬" ++ show p
@@ -52,7 +52,3 @@ data Theorem = Theorem  { name          :: String
                         , assumptions   :: [Formula]
                         , conclusion    :: Formula }
   deriving (Show, Eq)
-
-
-
-

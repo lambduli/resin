@@ -23,9 +23,9 @@ $lower                = [a-z]
 
 $digit                = [0-9]
 
-@lowerident           = $lower [$lower \- \_ $digit]*
+@lowerident           = $lower [$lower \- \_ $digit \']*
 
-@upperident           = $upper [$upper \- \_ $digit]*
+@upperident           = $upper [$upper \- \_ $digit \']*
 
 $space                = [\ \t\f\v\n]
 

@@ -6,7 +6,7 @@ import Prelude hiding ( negate )
 import System.IO ( hFlush, stdout, openFile, IOMode(ReadMode), hGetContents )
 import Control.Monad ( mapM_ )
 import Data.List qualified as List
-import Data.List.Extra ( trim )
+import Data.List.Extra qualified as List
 
 
 
@@ -139,41 +139,148 @@ example3 = S.Not example2
 main :: IO ()
 main = do
   putStrLn "Resin — a toy automated theorem prover for classical First Order Logic."
-  repl
+  repl [S.True]
   putStrLn "Bye!"
 
 
-repl :: IO ()
-repl = do
-  putStr "?- "
+repl :: [S.Formula] -> IO ()
+repl assumptions = do
+  let context = List.intercalate ", " (map show assumptions)
+  let short'context = (List.take 15 context) ++ if List.length context > 15 then "..." else ""
+  putStr $! short'context ++ " ⊢ "
   hFlush stdout
   str <- getLine
   case str of
     ":q" -> return ()
     ":Q" -> return ()
-    ':' : 'c' : 'h' : 'e' : 'c' : 'k' : file'path -> do
-      file'handle <- openFile (trim file'path) ReadMode
+
+
+    ':' : 'c' : 'h' : 'e' : 'c' : 'k' : ' ' : file'path -> do
+      file'handle <- openFile (List.trim file'path) ReadMode
       file'content <- hGetContents file'handle
       -- let tokens = use'lexer read'token file'content
       -- putStrLn $! "all the tokens:\n" ++ List.intercalate "\n" (map show tokens)
       let theorems = parse'theorems file'content
       mapM_ try'to'prove theorems
-      repl
+      repl assumptions
+
+    ':' : 'c' : 'h' : ' ' : file'path -> do
+      file'handle <- openFile (List.trim file'path) ReadMode
+      file'content <- hGetContents file'handle
+      -- let tokens = use'lexer read'token file'content
+      -- putStrLn $! "all the tokens:\n" ++ List.intercalate "\n" (map show tokens)
+      let theorems = parse'theorems file'content
+      mapM_ try'to'prove theorems
+      repl assumptions
+
+
+    ':' : 'a' : 's' : 's' : 'u' : 'm' : 'e' : ' ' : formula -> do
+      let fm = parse'formula formula
+      repl $! fm : assumptions
+
+    ':' : 'a' : ' ' : formula -> do
+      let fm = parse'formula formula
+      repl $! fm : assumptions
+
+
+    ':' : 's' : 'h' : 'o' : 'w' : _ -> do
+      let context = List.intercalate "  ∧  " (map show assumptions)
+      putStrLn context
+      repl assumptions
+
+    -- ':' : 's' : 'h' : _ -> do
+    --   let context = List.intercalate "  ∧  " (map show assumptions)
+    --   putStrLn context
+    --   repl assumptions
+
+    
+    ':' : 'e' : 'n' : 't' : 'a' : 'i' : 'l' : 's' : ' ' : formula -> do
+      let fm = parse'formula formula
+      try'to'prove'anon assumptions fm
+      repl assumptions
+
+    ':' : 'e' : ' ' : formula -> do
+      let fm = parse'formula formula
+      try'to'prove'anon assumptions fm
+      repl assumptions
+
+
+    ':' : 'c' : 'o' : 'n' : 's' : 'i' : 's' : 't' : 'e' : 'n' : 't' : _ -> do
+      let fm = list'conj assumptions
+      if pure'resolution' fm
+      then do
+        putStrLn "❌ the current set of assumptions is not logically consistent"
+      else do
+        putStrLn "✅ the current set of assumptions is logically consistent"
+      repl assumptions
+
+    ':' : 'c' : 'o' : 'n' : _ -> do
+      let fm = list'conj assumptions
+      if pure'resolution' fm
+      then do
+        putStrLn "❌ the current set of assumptions is not logically consistent"
+      else do
+        putStrLn "✅ the current set of assumptions is logically consistent"
+      repl assumptions
+
+
+    ':' : 'c' : 'l' : 'e' : 'a' : 'r' : _ -> do
+      repl [S.True]
+
+    -- ':' : 'c' : 'l' : _ -> do
+    --   repl [S.True]
+
+
+    ':' : 's' : 'k' : 'o' : 'l' : 'e' : 'm' : 'i' : 'z' : 'e' : ' ' : formula -> do
+      let fm = parse'formula formula
+      putStrLn $! show (skolemize fm)
+      repl assumptions
+
+    ':' : 's' : 'k' : 'o' : 'l' : ' ' : formula -> do
+      let fm = parse'formula formula
+      putStrLn $! show (skolemize fm)
+      repl assumptions
+
+    
+    ':' : 'c' : 'n' : 'f' : ' ' : formula -> do
+      let fm = parse'formula formula
+      putStrLn $! show (cnf fm)
+      repl assumptions
+
+
+    ':' : 'n' : 'n' : 'f' : ' ' : formula -> do
+      let fm = parse'formula formula
+      putStrLn $! show (nnf fm)
+      repl assumptions
+
+    
+    ':' : 'p' : 'n' : 'f' : ' ' : formula -> do
+      let fm = parse'formula formula
+      putStrLn $! show (pnf fm)
+      repl assumptions
+
 
     ':' : _ -> do
       putStrLn "I don't know this command, sorry."
-      repl
+      repl assumptions
+
+
+    input | List.null (List.trim input) -> do
+      repl assumptions
+
 
     _ -> do
       putStrLn "I don't understand this kind of input, sorry."
-      repl
-
+      repl assumptions
 
 
 try'to'prove :: S.Theorem -> IO ()
 try'to'prove (S.Theorem { S.name = name
                         , S.assumptions = assumptions
                         , S.conclusion = conclusion }) = do
+  -- putStrLn $! "checking theorem `" ++ name ++ "'"
+  -- putStrLn $! List.intercalate "\n∧\n" (map show assumptions)
+  -- putStrLn $! "⊢ " ++ show conclusion ++ " ."
   let is'valid = resolution assumptions conclusion
   if is'valid
   then do
@@ -182,8 +289,18 @@ try'to'prove (S.Theorem { S.name = name
     putStrLn $! "❌ theorem `" ++ name ++ "' is not logically valid"
     putStrLn $! "            an interpretation where all the assumptions and `" ++ show (nnf . negate $! conclusion) ++ "' all hold is possible"
 
+  -- putStrLn "________________________________________"
 
 
+try'to'prove'anon :: [S.Formula] -> S.Formula -> IO ()
+try'to'prove'anon assumptions conclusion = do
+  let is'valid = resolution assumptions conclusion
+  if is'valid
+  then do
+    putStrLn $! "✅ the conclusion  `" ++ show conclusion ++ "'  is logical consequence of the assumptions"
+  else do
+    putStrLn $! "❌ the conclusion  `" ++ show conclusion ++ "'  is not logical consequence of the assumptions"
+    putStrLn $! "            an interpretation where all the assumptions and `" ++ show (nnf . negate $! conclusion) ++ "' all hold is possible"
 
 
 

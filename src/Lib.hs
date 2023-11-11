@@ -345,9 +345,10 @@ functions fm = atom'union (\ (Rel _ terms) -> foldl' (\ s t -> s `Set.union` fun
 skolem :: Formula -> Set.Set String -> (Formula, Set.Set String)
 skolem fm@(Exists y p) fns
   = let xs  = Set.toList $! fv fm
-        f   = variant (if List.null xs then "c_" ++ y else "f_" ++ y) fns
+        f   = variant y {- (if List.null xs then "c_" ++ y else "f_" ++ y) -} fns
+        f'  = if List.null xs then 'ᶜ' : f else 'ᶠ' : f
         -- f'  = trace ("skolem of: " ++ show fm ++ "\n  | f= " ++ show f) f
-        fx  = Fn f (map (\ x -> Var x) xs)
+        fx  = Fn f' (map (\ x -> Var x) xs)
     in  skolem (subst (Map.singleton y fx) p) (f `Set.insert` fns)
 skolem fm@(Forall x p) fns
   = let (p', fns') = skolem p fns in (Forall x p', fns')
