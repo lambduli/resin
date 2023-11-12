@@ -49,6 +49,8 @@ $space+                 ;
 ","                     { \_ -> token Token.Comma }
 "."                     { \_ -> token Token.Period }
 "theorem"               { \_ -> token Token.Theorem }
+"constants"             { \_ -> token Token.Constants }
+"axioms"                { \_ -> token Token.Axioms }
 ":"                     { \_ -> token Token.Colon }
 "⊢"                     { \_ -> token Token.Turnstile }
 
@@ -201,6 +203,7 @@ data AlexInput = Input
 
 data Lexer'State = Lexer'State
   { lexer'input   :: !AlexInput
+  , constants     :: ![String]
   , scope         :: ![String] }
   deriving (Eq, Show)
 
@@ -212,6 +215,7 @@ initial'state s = Lexer'State
                         , ai'col'no     = 1 
                         , ai'last'char  = '\n'
                         , ai'input      = s }
-  ,  scope             = [] }
+  , constants         = []
+  , scope             = [] }
 
 }

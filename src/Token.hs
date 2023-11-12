@@ -8,27 +8,29 @@ data Token  = Upper'Var String
             | Comma           --  ,
             | Period          --  .
             | Theorem         --  theorem
-            | Colon           -- :
-            | Turnstile       -- ⊢
+            | Axioms          --  axioms
+            | Constants       --  constants
+            | Colon           --  :
+            | Turnstile       --  ⊢
 
-            | Tautology       -- ⊤
-            | Contradiction   -- ⊥
-            | Forall          -- ∀
-            | Exists          -- ∃
-            | Negate          -- ¬ NOT
-            | And             -- ∧ && AND
-            | Or              -- ∨ || OR
-            | Implication     -- ==>
-            | Equivalence     -- <=>
+            | Tautology       --  ⊤
+            | Contradiction   --  ⊥
+            | Forall          --  ∀
+            | Exists          --  ∃
+            | Negate          --  ¬ NOT
+            | And             --  ∧ && AND
+            | Or              --  ∨ || OR
+            | Implication     --  ==>
+            | Equivalence     --  <=>
 
             | Paren'Open      --  (
             | Paren'Close     --  )
-            | Box'Open        -- [
-            | Box'Close       -- ]
-            | Bracket'Open    -- {
-            | Bracket'Close   -- }
+            | Box'Open        --  [
+            | Box'Close       --  ]
+            | Bracket'Open    --  {
+            | Bracket'Close   --  }
 
-            | Underscore      -- _
-            | Equal           -- =
+            | Underscore      --  _
+            | Equal           --  =
             | EOF
   deriving (Show, Eq)

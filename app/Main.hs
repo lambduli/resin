@@ -10,7 +10,7 @@ import Data.List.Extra qualified as List
 
 
 import Lexer ( lexer, use'lexer, read'token )
-import Parser ( parse'theorems, parse'formula )
+import Parser ( parse'theorems, parse'formula, parse'module )
 import Syntax qualified as S
 import Lib ( resolution, {- pure'resolution , -} pure'resolution', pren'norm'form, pnf, specialize, generalize, a'skolemize, skol'norm'form, simp'cnf, con'norm'form, list'conj, simp'dnf, fv, negate, neg'norm'form, nnf, needs'skolemisation )
 
@@ -112,14 +112,14 @@ repl assumptions = do
       entails assumptions formula
 
 
-try'to'prove :: S.Theorem -> IO ()
-try'to'prove (S.Theorem { S.name = name
-                        , S.assumptions = assumptions
-                        , S.conclusion = conclusion }) = do
-  -- putStrLn $! "checking theorem `" ++ name ++ "'"
-  -- putStrLn $! List.intercalate "\n∧\n" (map show assumptions)
-  -- putStrLn $! "⊢ " ++ show conclusion ++ " ."
-  let is'valid = resolution assumptions conclusion
+try'to'prove :: [S.Formula] -> S.Theorem -> IO ()
+try'to'prove axioms (S.Theorem{ S.name = name
+                              , S.assumptions = assumptions
+                              , S.conclusion = conclusion }) = do
+  putStrLn $! "checking theorem `" ++ name ++ "'"
+  putStrLn $! List.intercalate "\n∧\n" (map show (axioms ++ assumptions))
+  putStrLn $! "⊢ " ++ show conclusion ++ " ."
+  let is'valid = resolution (axioms ++ assumptions) conclusion
   if is'valid
   then do
     putStrLn $! "✅ theorem `" ++ name ++ "' is logically valid"
@@ -127,7 +127,7 @@ try'to'prove (S.Theorem { S.name = name
     putStrLn $! "❌ theorem `" ++ name ++ "' is not logically valid"
     putStrLn $! "            an interpretation where all the assumptions and `" ++ show (nnf . negate $! conclusion) ++ "' all hold is possible"
 
-  -- putStrLn "________________________________________"
+  putStrLn "________________________________________"
 
 
 try'to'prove'anon :: [S.Formula] -> S.Formula -> IO ()
@@ -145,8 +145,8 @@ check :: [S.Formula] -> String -> IO ()
 check assumptions file'path = do
   file'handle <- openFile (List.trim file'path) ReadMode
   file'content <- hGetContents file'handle
-  let theorems = parse'theorems file'content
-  mapM_ try'to'prove theorems
+  let (_, axioms, theorems) = parse'module file'content
+  mapM_ (try'to'prove axioms) theorems
   repl assumptions
 
 

@@ -1,7 +1,7 @@
 {
 {-# LANGUAGE FlexibleContexts #-}
 
-module Parser ( parse'theorems, parse'formula ) where
+module Parser ( parse'module, parse'theorems, parse'formula ) where
 
 import Control.Monad.Error
 import Control.Monad.State
@@ -15,6 +15,7 @@ import Syntax qualified as S
 }
 
 
+%name parseModule Module
 %name parseTheorems Theorems
 %name parseFormula Formula 
 
@@ -33,6 +34,8 @@ import Syntax qualified as S
   ','         { Token.Comma }
   '.'         { Token.Period }
   'theorem'   { Token.Theorem }
+  'constants' { Token.Constants }
+  'axioms'    { Token.Axioms }
   ':'         { Token.Colon }
   '⊢'         { Token.Turnstile }
   '⊤'         { Token.Tautology }
@@ -62,6 +65,32 @@ import Syntax qualified as S
 
 %%
 
+Module      ::  { ([String], [Formula], [Theorem]) }
+            :   Constants Axioms Theorems   { ($1, $2, $3) }
+
+
+Constants   ::  { [String] }
+            :   'constants' ':' Consts '.'  {%  do
+                                                { s <- get
+                                                ; put s{ constants = $3 }
+                                                ; return $3 } }
+            |   {-  empty   -}              { [] }
+
+
+Consts      ::  { [String] }
+            :   LOWER                       { [ $1 ] }
+            |   LOWER ',' Consts            { $1 : $3 }
+
+
+Axioms      ::  { [Formula] }
+            :   'axioms' ':' Axs '.'        { $3 }
+            |   {-  empty   -}              { [] }
+
+
+Axs         ::  { [Formula] }
+            :   Formula                     { [ $1 ] }
+            |   Formula ',' Axs             { $1 : $3 }
+
 
 Theorems    ::  { [Theorem] }
             :   Theorem Theorems            { $1 : $2 }
@@ -73,6 +102,10 @@ Theorem     ::  { Theorem }
                                             { Theorem { name = $2
                                                       , assumptions = $4
                                                       , conclusion = $6 } }
+            |   'theorem' LOWER ':' Formula '.'
+                                            { Theorem { name = $2
+                                                      , assumptions = []
+                                                      , conclusion = $4 } }
 
 
 Assumptions ::  { [Formula] }
@@ -86,7 +119,6 @@ AssumpsRest ::  { [Formula] }
 
 Conclusion  ::  { Formula }
             :   Formula                     { $1 }
-
 
 
 Formula     ::  { Formula }
@@ -121,11 +153,17 @@ TArgsSep    ::  { [Term] }
 
 
 Term        ::  { Term }
-            :   LOWER                       { Var $1 }
+            :   LOWER                       {%  do
+                                                { consts <- gets constants
+                                                ; let is'constant = $1 `elem` consts
+                                                ; if is'constant then return (Fn $1 []) else return (Var $1) } }
             |   LOWER TermArgsM             { Fn $1 $2 }
 
 
 {
+
+parse'module :: String -> ([String], [Formula], [Theorem])
+parse'module source = eval'parser parseModule source
 
 parse'theorems :: String -> [Theorem]
 parse'theorems source = eval'parser parseTheorems source

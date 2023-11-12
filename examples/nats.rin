@@ -1,0 +1,41 @@
+% I can define constant symbols
+constants: zero, blah .
+
+
+% and axioms
+axioms: ∀ n (NAT(n)) ==> NAT(suc(n))
+      , NAT(zero) .
+
+
+% this says that one is a natural number
+theorem one-is-nat: NAT(suc(zero)) .
+
+
+% can not prove the following:
+% theorem no-nats : ∀ n ¬NAT(n) .
+
+% but can we prove the negation?
+theorem some-nats : ∃ n NAT(n) .
+
+
+% can not prove the following:
+% theorem zero-is-not-nat : ¬NAT(zero) .
+
+% but can we prove the negation?
+theorem zero-is-nat : NAT(zero) .
+
+
+% can not prove the following
+% theorem blah-is-nat: NAT(blah) .
+
+% but can we prove the negation?
+% theorem blah-is-not-nat : ¬NAT(blah) .
+% no we can't, why?
+% We are asking if the axioms entail the conclusion of the thereom.
+% So it must not be possible for Nat(blah) to hold, when the axioms hold.
+% But there are no axioms that would contradict that.
+% In other words, both those theorems involving `blah` are unprovable.
+
+
+% that's just a bunch of spoilers :)
+
