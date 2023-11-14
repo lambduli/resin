@@ -9,9 +9,10 @@ The implementation is based on a *given clause algorithm* for *resolution*.
 For more information about it, see the *Resources* section.
 
 
-## Syntax
+## Structure of the Files
 
-The Resin files have a `.rin` extension. They might look something like the following:
+The Resin files are meant to have a `.rin` extension.
+They might look something like the following snippet:
 
 ```
 constants: zero .
@@ -36,6 +37,24 @@ A file is split in three parts:
 - `theorems`—in general, they are in the shape of *entialment* but you can omit the assumptions part if there aren't any.
 
 Both `constants` and `axioms` sections must either define one or more constants or axioms or not be there at all.
+
+
+## Syntax
+
+The snippet above uses a few unicode character.
+You don't have to use those, the following shows the groups of symbols with the same meaning:
+
+| Unicode | ASCII     |
+|---------|-----------|
+| `∀`     | `forall`  |
+| `∃`     | `exists`  |
+| `⊤`     | `True`, `Tautology` |
+| `⊥`     | `False`, `Contradiction` |
+| `∧`     | `AND`, `&&` |
+| `∨`     | `OR`, `\|\|` |
+| `¬`     | `NOT`     |
+| `⟹`     | `==>`     |
+| `⟺`     | `<=>`     |
 
 
 ## Usage
