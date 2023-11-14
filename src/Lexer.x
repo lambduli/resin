@@ -27,7 +27,7 @@ $digit                = [0-9]
 
 @lowerident           = $lower [$lower \- \_ $digit \']*
 
-@upperident           = $upper [$upper \- \_ $digit \']*
+@upperident           = $upper [$lower $upper \- \_ $digit \']*
 
 $space                = [\ \t\f\v\n]
 

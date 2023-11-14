@@ -33,9 +33,14 @@ repl assumptions = do
     ":q" -> return ()
     ":Q" -> return ()
 
+    ':' : 'c' : 'h' : 'e' : 'c' : 'k' : ' ' : 'v' : 'e' : 'r' : 'b' : 'o' : 's' : 'e' : ' ' : file'path -> do
+      check'verbose assumptions file'path
 
     ':' : 'c' : 'h' : 'e' : 'c' : 'k' : ' ' : file'path -> do
       check assumptions file'path
+
+    ':' : 'c' : 'h' : ' ' : 'v' : 'e' : 'r' : ' ' : file'path -> do
+      check'verbose assumptions file'path
 
     ':' : 'c' : 'h' : ' ' : file'path -> do
       check assumptions file'path
@@ -116,9 +121,6 @@ try'to'prove :: [S.Formula] -> S.Theorem -> IO ()
 try'to'prove axioms (S.Theorem{ S.name = name
                               , S.assumptions = assumptions
                               , S.conclusion = conclusion }) = do
-  putStrLn $! "checking theorem `" ++ name ++ "'"
-  putStrLn $! List.intercalate "\n∧\n" (map show (axioms ++ assumptions))
-  putStrLn $! "⊢ " ++ show conclusion ++ " ."
   let is'valid = resolution (axioms ++ assumptions) conclusion
   if is'valid
   then do
@@ -127,7 +129,25 @@ try'to'prove axioms (S.Theorem{ S.name = name
     putStrLn $! "❌ theorem `" ++ name ++ "' is not logically valid"
     putStrLn $! "            an interpretation where all the assumptions and `" ++ show (nnf . negate $! conclusion) ++ "' all hold is possible"
 
-  putStrLn "________________________________________"
+
+try'to'prove'verbose :: [S.Formula] -> S.Theorem -> IO ()
+try'to'prove'verbose axioms (S.Theorem{ S.name = name
+                              , S.assumptions = assumptions
+                              , S.conclusion = conclusion }) = do
+  let first'line = "checking theorem `" ++ name ++ "':"
+  putStr $! first'line
+  let pad'len = List.length first'line - 1
+  let pad = List.take pad'len $! List.repeat ' '
+  putStrLn $! ' ' : List.intercalate ('\n' : pad ++ ", ") (map show (axioms ++ assumptions))
+  putStrLn $! pad ++ "⊢ " ++ show conclusion ++ " ."
+  let is'valid = resolution (axioms ++ assumptions) conclusion
+  if is'valid
+  then do
+    putStrLn $! "✅ theorem `" ++ name ++ "' is logically valid"
+  else do
+    putStrLn $! "❌ theorem `" ++ name ++ "' is not logically valid"
+    putStrLn $! "            an interpretation where all the assumptions and `" ++ show (nnf . negate $! conclusion) ++ "' all hold is possible"
+  putStrLn ""
 
 
 try'to'prove'anon :: [S.Formula] -> S.Formula -> IO ()
@@ -147,6 +167,15 @@ check assumptions file'path = do
   file'content <- hGetContents file'handle
   let (_, axioms, theorems) = parse'module file'content
   mapM_ (try'to'prove axioms) theorems
+  repl assumptions
+
+
+check'verbose :: [S.Formula] -> String -> IO ()
+check'verbose assumptions file'path = do
+  file'handle <- openFile (List.trim file'path) ReadMode
+  file'content <- hGetContents file'handle
+  let (_, axioms, theorems) = parse'module file'content
+  mapM_ (try'to'prove'verbose axioms) theorems
   repl assumptions
 
 

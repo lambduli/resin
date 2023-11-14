@@ -3,30 +3,30 @@ constants: zero, blah .
 
 
 % and axioms
-axioms: ∀ n (NAT(n)) ==> NAT(suc(n))
-      , NAT(zero) .
+axioms: ∀ n (Nat(n)) ==> Nat(suc(n))
+      , Nat(zero) .
 
 
 % this says that one is a natural number
-theorem one-is-nat: NAT(suc(zero)) .
+theorem one-is-nat: Nat(suc(zero)) .
 
 
 % can not prove the following:
 % theorem no-nats : ∀ n ¬NAT(n) .
 
 % but can we prove the negation?
-theorem some-nats : ∃ n NAT(n) .
+theorem some-nats : ∃ n Nat(n) .
 
 
 % can not prove the following:
 % theorem zero-is-not-nat : ¬NAT(zero) .
 
 % but can we prove the negation?
-theorem zero-is-nat : NAT(zero) .
+theorem zero-is-nat : Nat(zero) .
 
 
 % can not prove the following
-% theorem blah-is-nat: NAT(blah) .
+% theorem blah-is-nat: Nat(blah) .
 
 % but can we prove the negation?
 % theorem blah-is-not-nat : ¬NAT(blah) .
@@ -36,6 +36,13 @@ theorem zero-is-nat : NAT(zero) .
 % But there are no axioms that would contradict that.
 % In other words, both those theorems involving `blah` are unprovable.
 
-
-% that's just a bunch of spoilers :)
-
+% There's a Herbrand's theorem to the effect that if
+% a conclusion is entailed by a set of assumptions
+% it can be proved using finite number of ground instances.
+% That means—finite terms.
+% But if the conclusion is not entailed by it
+% it seems to suffer from an issue tied to the fact that
+% functions are technically infinite.
+% There's `suc(zero)` and `suc(suc(zero))` and `suc(suc(suc(zero)))`
+% and so on.
+% The resolution seems to keep generating those without a chance for stopping.

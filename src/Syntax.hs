@@ -29,7 +29,7 @@ data Formula  = True                    -- ⊤
 
 instance Show Term where
   show (Var n) = n
-  show (Fn n []) = n ++ "ᶜ"
+  show (Fn n []) = n
   show (Fn n terms) = n ++ "(" ++ intercalate ", " (map show terms) ++ ")"
 
 
