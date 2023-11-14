@@ -12,7 +12,7 @@ import Data.List.Extra qualified as List
 import Lexer ( lexer, use'lexer, read'token )
 import Parser ( parse'theorems, parse'formula, parse'module )
 import Syntax qualified as S
-import Lib ( resolution, {- pure'resolution , -} pure'resolution', pren'norm'form, pnf, specialize, generalize, a'skolemize, skol'norm'form, simp'cnf, con'norm'form, list'conj, simp'dnf, fv, negate, neg'norm'form, nnf, needs'skolemisation )
+import Lib ( resolution, pure'resolution', pren'norm'form, pnf, specialize, a'skolemize, skol'norm'form, simp'cnf, con'norm'form, list'conj, simp'dnf, fv, negate, neg'norm'form, nnf, fol'formula )
 
 
 main :: IO ()
@@ -213,7 +213,7 @@ skolemize assumptions formula = do
 cnf :: [S.Formula] -> String -> IO ()
 cnf assumptions formula = do
   let fm = parse'formula formula
-  if needs'skolemisation fm
+  if fol'formula fm
   then do
     putStrLn "⚠️  I can't perform the CNF conversion on a non-propositional formula."
     putStrLn "   The formula contains existential quantifiers."

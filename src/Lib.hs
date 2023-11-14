@@ -27,15 +27,6 @@ atom'union :: Ord a => (Rel -> Set.Set a) -> Formula -> Set.Set a
 atom'union f fm = over'atoms (\ rel acc -> f rel `Set.union` acc) fm Set.empty
 
 
--- p'simplify :: Formula -> Formula
--- p'simplify (Not p) = p'simplify' (Not (p'simplify p))
--- p'simplify (And p q) = p'simplify' (And (p'simplify p) (p'simplify q))
--- p'simplify (Or p q) = p'simplify' (Or (p'simplify p) (p'simplify q))
--- p'simplify (Impl p q) = p'simplify' (Impl (p'simplify p) (p'simplify q))
--- p'simplify (Eq p q) = p'simplify' (Eq (p'simplify p) (p'simplify q))
--- p'simplify f = f
-
-
 p'simplify' :: Formula -> Formula
 p'simplify' (Not S.False) = S.True
 p'simplify' (Not S.True) = S.False
@@ -71,26 +62,6 @@ negate (Not p) = p
 negate p = Not p
 
 
--- nnf' :: Formula -> Formula
--- nnf' (And p q) = nnf' p `And` nnf' q
--- nnf' (Or p q) = nnf' p `Or` nnf' q
--- nnf' (Impl p q) = nnf' (Not p) `Or` nnf' q
--- nnf' (Eq p q) = (nnf' p `And` nnf' q) `Or` (nnf' (Not p) `And` nnf' (Not q))
--- nnf' (Not (Not p)) = nnf' p
--- nnf' (Not (And p q)) = nnf' (Not p) `Or` nnf' (Not q)
--- nnf' (Not (Or p q)) = nnf' (Not p) `And` nnf' (Not q)
--- nnf' (Not (Impl p q)) = nnf' p `And` nnf' (Not q)
--- nnf' (Not (Eq p q)) = (nnf' p `And` nnf' (Not q)) `Or` (nnf' (Not p) `And` nnf' q)
--- nnf' f = f
-
-
--- nnf :: Formula -> Formula
--- nnf fm = nnf' (p'simplify fm)
-
-
-{-  The functions `nenf` are defined on the page 53.  -}
-
-
 list'conj :: [Formula] -> Formula
 list'conj [] = S.True
 list'conj (f : fs) = foldl' And f fs
@@ -106,6 +77,7 @@ list'disj (f : fs) = foldl' Or f fs
 
 distrib :: Ord a => Set.Set (Set.Set a) -> Set.Set (Set.Set a) -> Set.Set (Set.Set a)
 distrib s1 s2 = Set.map (uncurry Set.union) (Set.cartesianProduct s1 s2)
+
 
 {-  Just a small test.  -}
 test1 :: Bool
@@ -132,7 +104,7 @@ trivial :: [Formula] -> Bool
 trivial literals =
   let (pos, neg) = List.partition positive literals
   in  not (List.null (pos `List.intersect` List.map negate neg))
-{-  TODO: In the book they use a function names `image` instead of `List.map`.
+{-  TODO: In the book they use a function named `image` instead of `List.map`.
           The function `image` is just a map but on Sets.
           It is my understadning that if the list of literals was already a "Set"
           then the `negs` will also be a "Set" and the `negate` operation
@@ -151,6 +123,7 @@ simp'dnf fm =
   in  map Set.toList simp'djs'sets
 
 
+{-  Disjunction Normal Form   -}
 dnf :: Formula -> Formula
 dnf fm = list'disj $! map list'conj $! simp'dnf fm
 
@@ -183,6 +156,7 @@ simp'cnf fm =
   in  map Set.toList simp'cjs'sets
 
 
+{-  Conjunction Normal Form   -}
 cnf :: Formula -> Formula
 cnf fm = list'conj $! map list'disj $! simp'cnf fm
 
@@ -208,8 +182,8 @@ fv (Forall x p) = Set.delete x (fv p)
 fv (Exists x p) = Set.delete x (fv p)
 
 
-generalize :: Formula -> Formula
-generalize fm = List.foldr Forall fm (fv fm)
+-- generalize :: Formula -> Formula
+-- generalize fm = List.foldr Forall fm (fv fm)
 
 
 t'subst :: Map.Map String Term -> Term -> Term
@@ -344,7 +318,7 @@ skolem fm@(Exists y p) fns
   = let xs  = Set.toList $! fv fm
         f   = variant y {- (if List.null xs then "c_" ++ y else "f_" ++ y) -} fns
         f'  = if List.null xs then 'ᶜ' : f else 'ᶠ' : f
-        fx  = Fn f' (map (\ x -> Var x) xs)
+        fx  = Fn f' (map Var xs)
     in  skolem (subst (Map.singleton y fx) p) (f `Set.insert` fns)
 skolem fm@(Forall x p) fns
   = let (p', fns') = skolem p fns in (Forall x p', fns')
@@ -376,8 +350,14 @@ specialize (Forall x p) = specialize p
 specialize fm = fm
 
 
-skolemize :: Formula -> Formula
-skolemize fm = specialize $! pnf $! a'skolemize fm
+--  The definitions of `skolemize` from the book does specialization as well.
+--  That is not something I want to have.
+-- skolemize :: Formula -> Formula
+-- skolemize fm = specialize $! pnf $! a'skolemize fm
+
+
+skolemise :: Formula -> Formula
+skolemise = pnf . a'skolemize
 
 
 {-  Unification   -}
@@ -426,10 +406,6 @@ solve :: Map.Map String Term -> Map.Map String Term
 solve env
   = let env' = Map.map (t'subst env) env
     in  if env' == env then env else solve env'
-
-
--- full'unify :: [(Term, Term)] -> Map.Map String Term
--- full'unify eqs = solve (unify Map.empty eqs)
 
 
 {-  QUESTION: Why don't we need to handle tautology as well?  -}
@@ -516,11 +492,11 @@ res'loop (used, (cl : cls))
   = let used' = cl : used
         resolvents = map (resolve'clauses cl) used'
         news = foldl' Set.union Set.empty resolvents
-    in  if [] `List.elem` news then True else res'loop (used', cls ++ Set.toList news)
+    in  ([] `List.elem` news) || res'loop (used', cls ++ Set.toList news)
 
 
 pure'resolution' :: Formula -> Bool
-pure'resolution' fm = res'loop ([], simp'cnf . skolemize . generalize $! fm)
+pure'resolution' fm = res'loop ([], simp'cnf . specialize . skolemise $! fm)
 
 
 resolution :: [Formula] -> Formula -> Bool
@@ -539,7 +515,7 @@ pren'norm'form = pnf . simplify
 
 
 skol'norm'form :: Formula -> Formula
-skol'norm'form = pnf . a'skolemize
+skol'norm'form = skolemise
 
 
 --  NOTE: I am skipping `pnf` there, I still think it should work, but it needs some testing.
@@ -547,14 +523,14 @@ con'norm'form :: Formula -> Formula
 con'norm'form = specialize . prenex . a'skolemize -- roughly: skolem . nnf . simplify
 
 
-needs'skolemisation :: Formula -> Bool
-needs'skolemisation S.True = False
-needs'skolemisation S.False = False
-needs'skolemisation (Atom _) = False
-needs'skolemisation (Not p) = needs'skolemisation p
-needs'skolemisation (And p q) = needs'skolemisation p || needs'skolemisation q
-needs'skolemisation (Or p q) = needs'skolemisation p || needs'skolemisation q
-needs'skolemisation (Impl p q) = needs'skolemisation p || needs'skolemisation q
-needs'skolemisation (Eq p q) = needs'skolemisation p || needs'skolemisation q
-needs'skolemisation (Forall _ p) = needs'skolemisation p
-needs'skolemisation (Exists _ _) = True
+fol'formula :: Formula -> Bool
+fol'formula S.True = False
+fol'formula S.False = False
+fol'formula (Atom _) = False
+fol'formula (Not p) = fol'formula p
+fol'formula (And p q) = fol'formula p || fol'formula q
+fol'formula (Or p q) = fol'formula p || fol'formula q
+fol'formula (Impl p q) = fol'formula p || fol'formula q
+fol'formula (Eq p q) = fol'formula p || fol'formula q
+fol'formula (Forall _ p) = fol'formula p
+fol'formula (Exists _ _) = True

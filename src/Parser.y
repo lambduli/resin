@@ -58,7 +58,8 @@ import Syntax qualified as S
   '='         { Token.Equal }
 
 
-%nonassoc '<=>' '==>'
+%right '<=>'
+%right '==>'
 %left '∨'
 %left '∧'
 %right '¬'
@@ -130,11 +131,27 @@ Formula     ::  { Formula }
             |   Formula '∨' Formula         { $1 `Or` $3 }
             |   Formula '==>' Formula       { $1 `Impl` $3 }
             |   Formula '<=>' Formula       { $1 `Eq` $3 }
-            |   '∀' LOWER Formula           { Forall $2 $3 } -- TODO: maybe use the scope?
-            |   '∃' LOWER Formula           { Exists $2 $3 } -- TODO: maybe use the scope?
+            |   '∀' Binder QFormula         { Forall $2 $3 } -- TODO: maybe use the scope?
+            |   '∃' Binder QFormula         { Exists $2 $3 } -- TODO: maybe use the scope?
             |   '(' Formula ')'             { $2 }
             |   '{' Formula '}'             { $2 }
             |   '[' Formula ']'             { $2 }
+
+
+Binder      ::  { String }
+            :   LOWER                       {% do
+                                                { s <- get
+                                                ; let binders = scope s
+                                                ; put s{ scope = $1 : binders }
+                                                ; return $1 } }
+
+
+QFormula    ::  { Formula }
+            :   Formula                     {% do
+                                                { s <- get
+                                                ; let (binder : binders) = scope s
+                                                ; put s{ scope = binders }
+                                                ; return $1 } }
 
 
 Relation    ::  { Rel }
@@ -155,8 +172,14 @@ TArgsSep    ::  { [Term] }
 Term        ::  { Term }
             :   LOWER                       {%  do
                                                 { consts <- gets constants
+                                                ; binders <- gets scope
                                                 ; let is'constant = $1 `elem` consts
-                                                ; if is'constant then return (Fn $1 []) else return (Var $1) } }
+                                                ; let is'bound = $1 `elem` binders
+                                                ; if is'constant
+                                                  then return (Fn $1 [])
+                                                  else  if is'bound
+                                                        then return (Var $1)
+                                                        else error $! "Parsing Error: Unbound variable `" ++ $1 ++ "'." } }
             |   LOWER TermArgsM             { Fn $1 $2 }
 
 
