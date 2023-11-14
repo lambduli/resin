@@ -5,12 +5,70 @@ An implementation of a toy *automated theorem prover* for *classical FOL* built 
 
 ## What does this project implement?
 
-TODO: Mention/explain the *given clause* algorithm and give a bit of a background behind *resolution*.
+The implementation is based on a *given clause algorithm* for *resolution*.
+For more information about it, see the *Resources* section.
+
+
+## Syntax
+
+The Resin files have a `.rin` extension. They might look something like the following:
+
+```
+constants: zero .
+
+axioms: ∀ n (Nat(n)) ==> Nat(suc(n))
+      , Nat(zero) .
+
+theorem one-is-nat: Nat(suc(zero)) .
+
+theorem some-nats : ∃ n Nat(n) .
+
+theorem prop-modus-tollens: A => B
+                          , ¬B
+                          ⊢ ¬A .
+```
+
+The grammar is quite simple.
+A file is split in three parts:
+
+- `constants`—so that you don't have to write `zero()` and so on,
+- `axioms`—those formulae will be available to all the theorems in the file,
+- `theorems`—in general, they are in the shape of *entialment* but you can omit the assumptions part if there aren't any.
+
+Both `constants` and `axioms` sections must either define one or more constants or axioms or not be there at all.
 
 
 ## Usage
 
-TODO: How to build and how to use.
+To build type `cabal build` and to run `cabal run`.
+
+## The Interface of the REPL
+
+1) To check all the theorems in a file, type `:check <file-path>`.
+
+The prompt has a shape of an entailment, that is by design.
+
+2) To assert that a particular formula `ƒ` is an assumption, type `:assume <ƒ>`.
+
+The prompt is kept short for convenience.
+
+3) To print all the assumptions, type `:show`.
+
+4) To see if a formula `ƒ` is entailed by the current set of assumptions, type `:entails <ƒ>` or just enter the formula directly. That is why the prompt has that shape.
+
+5) To check that the current set of assumptions is consistent (does not contain a contradiction), type `:consistent`.
+
+6) To reset the current set of assumptions back to `⊤`, type `:clear`.
+
+There are also a few commands for a simple transformation on formulae.
+
+7) To put a formula `ƒ` into a *Negation Normal Form*, type `:nnf <ƒ>`.
+
+8) To put a formula `ƒ` into a *Prenex Normal Form*, type `:pnf <ƒ>`.
+
+9) To put a formula `ƒ` into a *Skolem Normal Form*, type `:skolemize <ƒ>`.
+
+10) To put a propositional formula `ƒ` into a *Conjunction Normal Form*, type `:cnf <ƒ>`.
 
 
 ## Q&A
@@ -23,6 +81,8 @@ TODO: How to build and how to use.
 ## Resources
 
 [Handbook of Practical Logic and Automated Reasoning](https://www.cl.cam.ac.uk/~jrh13/atp/)
+
+The source code has been extracted from the book and only slightly modified.
 
 
 ## TODO

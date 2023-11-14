@@ -3,11 +3,11 @@
 
 module Parser ( parse'module, parse'theorems, parse'formula ) where
 
-import Control.Monad.Error
-import Control.Monad.State
+import Control.Monad.Except ( throwError )
+import Control.Monad.State ( MonadState(get, put), gets )
 import Data.Either.Extra ( mapRight )
 
-import Lexer ( lexer, eval'parser', Lexer(..), AlexInput(..), Lexer'State(..) )
+import Lexer ( lexer, eval'parser, Lexer(..), AlexInput(..), Lexer'State(..) )
 import Token ( Token )
 import Token qualified as Token
 import Syntax ( Rel(..), Term(..), Formula(..), Theorem(..) )
@@ -187,14 +187,14 @@ Term        ::  { Term }
 {
 
 parse'module :: String -> Either String ([String], [Formula], [Theorem])
-parse'module source = mapRight fst $! eval'parser' parseModule source
+parse'module source = mapRight fst $! eval'parser parseModule source
 
 parse'theorems :: String -> Either String  [Theorem]
-parse'theorems source = mapRight fst $! eval'parser' parseTheorems source
+parse'theorems source = mapRight fst $! eval'parser parseTheorems source
 
 
 parse'formula :: String -> Either String Formula
-parse'formula source = mapRight fst $! eval'parser' parseFormula source
+parse'formula source = mapRight fst $! eval'parser parseFormula source
 
 
 parseError _ = do

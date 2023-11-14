@@ -1,9 +1,9 @@
 {
-module Lexer ( lexer, read'token, eval'parser', {- use'lexer, eval'parser, -} Lexer(..), AlexInput(..), Lexer'State(..) ) where
+module Lexer ( lexer, read'token, eval'parser, {- use'lexer, -} Lexer(..), AlexInput(..), Lexer'State(..) ) where
 
-import Control.Monad.State
+
 import Control.Monad.Except ( Except, runExcept )
-import Control.Monad.State ( MonadState(get, put), gets, evalStateT, StateT )
+import Control.Monad.State ( MonadState(get, put), gets, StateT( runStateT ) )
 
 import Data.Word ( Word8 )
 import Data.Char ( ord )
@@ -191,8 +191,8 @@ get'col'no = gets (ai'col'no . lexer'input)
 -- eval'parser parser source = evalState parser (initial'state source)
 
 
-eval'parser' :: Lexer a -> String -> Either String (a, Lexer'State)
-eval'parser' parser source = runExcept $! runStateT parser (initial'state source)
+eval'parser :: Lexer a -> String -> Either String (a, Lexer'State)
+eval'parser parser source = runExcept $! runStateT parser (initial'state source)
 
 
 type Lexer a = StateT Lexer'State (Except String) a
