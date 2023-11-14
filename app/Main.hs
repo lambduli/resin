@@ -9,7 +9,7 @@ import Data.List qualified as List
 import Data.List.Extra qualified as List
 
 
-import Lexer ( lexer, use'lexer, read'token )
+import Lexer ( lexer, {- use'lexer, -} read'token )
 import Parser ( parse'theorems, parse'formula, parse'module )
 import Syntax qualified as S
 import Lib ( resolution, pure'resolution', pren'norm'form, pnf, specialize, a'skolemize, skol'norm'form, simp'cnf, con'norm'form, list'conj, simp'dnf, fv, negate, neg'norm'form, nnf, fol'formula )
@@ -78,31 +78,43 @@ repl assumptions = do
       skolemize assumptions formula
 
     ':' : 's' : 'i' : 'm' : 'p' : ' ' : formula -> do
-      let fm = parse'formula formula
-      putStrLn $! show fm
+      case parse'formula formula of
+        Left err -> do
+          putStrLn err
+        Right fm -> do
+          putStrLn $! show fm
       repl assumptions
     
     ':' : 'c' : 'n' : 'f' : ' ' : formula -> do
       cnf assumptions formula
 
     ':' : 'n' : 'n' : 'f' : ' ' : formula -> do
-      let fm = parse'formula formula
-      putStrLn $! show (neg'norm'form fm)
+      case parse'formula formula of
+        Left err -> do
+          putStrLn err
+        Right fm -> do
+          putStrLn $! show (neg'norm'form fm)
       repl assumptions
 
     ':' : 'p' : 'n' : 'f' : ' ' : formula -> do
-      let fm = parse'formula formula
-      putStrLn $! show (pren'norm'form fm)
+      case parse'formula formula of
+        Left err -> do
+          putStrLn err
+        Right fm -> do
+          putStrLn $! show (pren'norm'form fm)
       repl assumptions
 
-    ':' : 't' : 'o' : 'k' : ' ' : input -> do
-      let tokens = use'lexer read'token input
-      putStrLn $! "All the tokens:\n" ++ List.intercalate "\n  " (map show tokens)
-      repl assumptions
+    -- ':' : 't' : 'o' : 'k' : ' ' : input -> do
+    --   let tokens = use'lexer read'token input
+    --   putStrLn $! "All the tokens:\n" ++ List.intercalate "\n  " (map show tokens)
+    --   repl assumptions
 
     ':' : 'r' : 'e' : 'p' : 'e' : 'a' : 't' : ' ' : formula -> do
-      let fm = parse'formula formula
-      putStrLn $! show fm
+      case parse'formula formula of
+        Left err -> do
+          putStrLn err
+        Right fm -> do
+          putStrLn $! show fm
       repl assumptions
 
     ':' : _ -> do
@@ -165,8 +177,11 @@ check :: [S.Formula] -> String -> IO ()
 check assumptions file'path = do
   file'handle <- openFile (List.trim file'path) ReadMode
   file'content <- hGetContents file'handle
-  let (_, axioms, theorems) = parse'module file'content
-  mapM_ (try'to'prove axioms) theorems
+  case parse'module file'content of
+    Left err -> do
+      putStrLn err
+    Right (_, axioms, theorems) -> do
+      mapM_ (try'to'prove axioms) theorems
   repl assumptions
 
 
@@ -174,21 +189,31 @@ check'verbose :: [S.Formula] -> String -> IO ()
 check'verbose assumptions file'path = do
   file'handle <- openFile (List.trim file'path) ReadMode
   file'content <- hGetContents file'handle
-  let (_, axioms, theorems) = parse'module file'content
-  mapM_ (try'to'prove'verbose axioms) theorems
+  case parse'module file'content of
+    Left err -> do
+      putStrLn err
+    Right (_, axioms, theorems) -> do
+      mapM_ (try'to'prove'verbose axioms) theorems
   repl assumptions
 
 
 assume :: [S.Formula] -> String -> IO ()
 assume assumptions formula = do
-  let fm = parse'formula formula
-  repl $! fm : assumptions
+  case parse'formula formula of
+    Left err -> do
+      putStrLn err
+      repl assumptions
+    Right fm -> do
+      repl $! fm : assumptions
 
 
 entails :: [S.Formula] -> String -> IO ()
 entails assumptions formula = do
-  let fm = parse'formula formula
-  try'to'prove'anon assumptions fm
+  case parse'formula formula of
+    Left err -> do
+      putStrLn err
+    Right fm -> do
+      try'to'prove'anon assumptions fm
   repl assumptions
 
 
@@ -205,19 +230,25 @@ consistent assumptions = do
 
 skolemize :: [S.Formula] -> String -> IO ()
 skolemize assumptions formula = do
-  let fm = parse'formula formula
-  putStrLn $! show (skol'norm'form fm)
+  case parse'formula formula of
+    Left err -> do
+      putStrLn err
+    Right fm -> do
+      putStrLn $! show (skol'norm'form fm)
   repl assumptions
 
 
 cnf :: [S.Formula] -> String -> IO ()
 cnf assumptions formula = do
-  let fm = parse'formula formula
-  if fol'formula fm
-  then do
-    putStrLn "⚠️  I can't perform the CNF conversion on a non-propositional formula."
-    putStrLn "   The formula contains existential quantifiers."
-    putStrLn "   This would require skolemization, a process that might produce only a equisatisfiable formula."
-  else do
-    putStrLn $! show (con'norm'form fm)
-  repl assumptions
+  case parse'formula formula of
+    Left err -> do
+      putStrLn err
+    Right fm -> do
+      if fol'formula fm
+      then do
+        putStrLn "⚠️  I can't perform the CNF conversion on a non-propositional formula."
+        putStrLn "   The formula contains existential quantifiers."
+        putStrLn "   This would require skolemization, a process that might produce only a equisatisfiable formula."
+      else do
+        putStrLn $! show (con'norm'form fm)
+      repl assumptions

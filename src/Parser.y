@@ -5,8 +5,9 @@ module Parser ( parse'module, parse'theorems, parse'formula ) where
 
 import Control.Monad.Error
 import Control.Monad.State
+import Data.Either.Extra ( mapRight )
 
-import Lexer ( lexer, eval'parser, Lexer(..), AlexInput(..), Lexer'State(..) )
+import Lexer ( lexer, eval'parser', Lexer(..), AlexInput(..), Lexer'State(..) )
 import Token ( Token )
 import Token qualified as Token
 import Syntax ( Rel(..), Term(..), Formula(..), Theorem(..) )
@@ -179,26 +180,26 @@ Term        ::  { Term }
                                                   then return (Fn $1 [])
                                                   else  if is'bound
                                                         then return (Var $1)
-                                                        else error $! "Parsing Error: Unbound variable `" ++ $1 ++ "'." } }
+                                                        else throwError $! "Parsing Error: Unbound variable `" ++ $1 ++ "'." } }
             |   LOWER TermArgsM             { Fn $1 $2 }
 
 
 {
 
-parse'module :: String -> ([String], [Formula], [Theorem])
-parse'module source = eval'parser parseModule source
+parse'module :: String -> Either String ([String], [Formula], [Theorem])
+parse'module source = mapRight fst $! eval'parser' parseModule source
 
-parse'theorems :: String -> [Theorem]
-parse'theorems source = eval'parser parseTheorems source
+parse'theorems :: String -> Either String  [Theorem]
+parse'theorems source = mapRight fst $! eval'parser' parseTheorems source
 
 
-parse'formula :: String -> Formula
-parse'formula source = eval'parser parseFormula source
+parse'formula :: String -> Either String Formula
+parse'formula source = mapRight fst $! eval'parser' parseFormula source
 
 
 parseError _ = do
   col'no <- gets (ai'col'no . lexer'input)
   l'no <- gets (ai'line'no . lexer'input)
   state <- get
-  error $ "Parse error on line " ++ show l'no ++ ", column " ++ show col'no ++ "." ++ "  "  ++ show (lexer'input state) -- ++ show state
+  throwError $ "Parse error on line " ++ show l'no ++ ", column " ++ show col'no ++ "." -- ++ "  "  ++ show (lexer'input state) -- ++ show state
 }
