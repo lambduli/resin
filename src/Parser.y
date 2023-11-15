@@ -6,6 +6,7 @@ module Parser ( parse'module, parse'theorems, parse'formula ) where
 import Control.Monad.Except ( throwError )
 import Control.Monad.State ( MonadState(get, put), gets )
 import Data.Either.Extra ( mapRight )
+import Data.List qualified as List
 
 import Lexer ( lexer, eval'parser, Lexer(..), AlexInput(..), Lexer'State(..) )
 import Token ( Token )
@@ -167,6 +168,7 @@ TermArgsM   ::  { [Term] }
 TArgsSep    ::  { [Term] }
             :   Term                        { [ $1 ] }
             |   Term ',' TArgsSep           { $1 : $3 }
+            -- |   Term error                  {% throwError ("Parsing Error: I was expecting a comma ...", -1) }
             |   {-  empty   -}              { [] }
 
 
@@ -174,32 +176,36 @@ Term        ::  { Term }
             :   LOWER                       {%  do
                                                 { consts <- gets constants
                                                 ; binders <- gets scope
+                                                ; col'now <- gets (ai'col'no . lexer'input)
+                                                ; let col'no = col'now - List.length $1
+                                                ; rest <- gets (ai'input . lexer'input)
                                                 ; let is'constant = $1 `elem` consts
                                                 ; let is'bound = $1 `elem` binders
                                                 ; if is'constant
                                                   then return (Fn $1 [])
                                                   else  if is'bound
                                                         then return (Var $1)
-                                                        else throwError $! "Parsing Error: Unbound variable `" ++ $1 ++ "'." } }
+                                                        else throwError ("Parsing Error: Unbound variable `" ++ $1 ++ "'.", col'no) } }
             |   LOWER TermArgsM             { Fn $1 $2 }
 
 
 {
 
-parse'module :: String -> Either String ([String], [Formula], [Theorem])
+parse'module :: String -> Either (String, Int) ([String], [Formula], [Theorem])
 parse'module source = mapRight fst $! eval'parser parseModule source
 
-parse'theorems :: String -> Either String  [Theorem]
+parse'theorems :: String -> Either (String, Int)  [Theorem]
 parse'theorems source = mapRight fst $! eval'parser parseTheorems source
 
 
-parse'formula :: String -> Either String Formula
+parse'formula :: String -> Either (String, Int) Formula
 parse'formula source = mapRight fst $! eval'parser parseFormula source
 
 
 parseError _ = do
   col'no <- gets (ai'col'no . lexer'input)
   l'no <- gets (ai'line'no . lexer'input)
+  last'char <- gets (ai'last'char . lexer'input)
   state <- get
-  throwError $ "Parse error on line " ++ show l'no ++ ", column " ++ show col'no ++ "." -- ++ "  "  ++ show (lexer'input state) -- ++ show state
+  throwError ("Parse error near character `" ++ [last'char] ++ "' on line " ++ show l'no ++ ", column " ++ show col'no ++ ".", col'no)
 }

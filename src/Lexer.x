@@ -191,11 +191,11 @@ get'col'no = gets (ai'col'no . lexer'input)
 -- eval'parser parser source = evalState parser (initial'state source)
 
 
-eval'parser :: Lexer a -> String -> Either String (a, Lexer'State)
+eval'parser :: Lexer a -> String -> Either (String, Int) (a, Lexer'State)
 eval'parser parser source = runExcept $! runStateT parser (initial'state source)
 
 
-type Lexer a = StateT Lexer'State (Except String) a
+type Lexer a = StateT Lexer'State (Except (String, Int)) a
 
 
 data AlexInput = Input

@@ -26,6 +26,7 @@ repl :: [S.Formula] -> IO ()
 repl assumptions = do
   let context = List.intercalate ", " (map show assumptions)
   let short'context = (List.take 15 context) ++ if List.length context > 15 then "..." else ""
+  let prompt'len = List.length short'context + 3 - 1
   putStr $! short'context ++ " ⊢ "
   hFlush stdout
   str <- getLine
@@ -46,10 +47,10 @@ repl assumptions = do
       check assumptions file'path
 
     ':' : 'a' : 's' : 's' : 'u' : 'm' : 'e' : ' ' : formula -> do
-      assume assumptions formula
+      assume (prompt'len + 8) assumptions formula
 
     ':' : 'a' : ' ' : formula -> do
-      assume assumptions formula
+      assume (prompt'len + 3) assumptions formula
 
     ':' : 's' : 'h' : 'o' : 'w' : _ -> do
       let context = List.intercalate "  ∧  " (map show assumptions)
@@ -57,10 +58,10 @@ repl assumptions = do
       repl assumptions
     
     ':' : 'e' : 'n' : 't' : 'a' : 'i' : 'l' : 's' : ' ' : formula -> do
-      entails assumptions formula
+      entails (prompt'len + 9) assumptions formula
 
     ':' : 'e' : ' ' : formula -> do
-      entails assumptions formula
+      entails (prompt'len + 3) assumptions formula
 
     ':' : 'c' : 'o' : 'n' : 's' : 'i' : 's' : 't' : 'e' : 'n' : 't' : _ -> do
       consistent assumptions
@@ -72,25 +73,29 @@ repl assumptions = do
       repl [S.True]
 
     ':' : 's' : 'k' : 'o' : 'l' : 'e' : 'm' : 'i' : 'z' : 'e' : ' ' : formula -> do
-      skolemize assumptions formula
+      skolemize (prompt'len + 11) assumptions formula
 
     ':' : 's' : 'k' : 'o' : 'l' : ' ' : formula -> do
-      skolemize assumptions formula
+      skolemize (prompt'len + 6) assumptions formula
 
     ':' : 's' : 'i' : 'm' : 'p' : ' ' : formula -> do
       case parse'formula formula of
-        Left err -> do
+        Left (err, col) -> do
+          let padding = take (prompt'len + 6 + col) $! repeat ' '
+          putStrLn $! padding ++ "^"
           putStrLn err
         Right fm -> do
           putStrLn $! show fm
       repl assumptions
     
     ':' : 'c' : 'n' : 'f' : ' ' : formula -> do
-      cnf assumptions formula
+      cnf (prompt'len + 5) assumptions formula
 
     ':' : 'n' : 'n' : 'f' : ' ' : formula -> do
       case parse'formula formula of
-        Left err -> do
+        Left (err, col) -> do
+          let padding = take (prompt'len + 5 + col) $! repeat ' '
+          putStrLn $! padding ++ "^"
           putStrLn err
         Right fm -> do
           putStrLn $! show (neg'norm'form fm)
@@ -98,7 +103,9 @@ repl assumptions = do
 
     ':' : 'p' : 'n' : 'f' : ' ' : formula -> do
       case parse'formula formula of
-        Left err -> do
+        Left (err, col) -> do
+          let padding = take (prompt'len + 5 + col) $! repeat ' '
+          putStrLn $! padding ++ "^"
           putStrLn err
         Right fm -> do
           putStrLn $! show (pren'norm'form fm)
@@ -111,7 +118,9 @@ repl assumptions = do
 
     ':' : 'r' : 'e' : 'p' : 'e' : 'a' : 't' : ' ' : formula -> do
       case parse'formula formula of
-        Left err -> do
+        Left (err, col) -> do
+          let padding = take (prompt'len + 8 + col) $! repeat ' '
+          putStrLn $! padding ++ "^"
           putStrLn err
         Right fm -> do
           putStrLn $! show fm
@@ -126,7 +135,7 @@ repl assumptions = do
 
     --  Because what the prompt looks like, the `entails` check is the default.
     formula -> do
-      entails assumptions formula
+      entails prompt'len assumptions formula
 
 
 try'to'prove :: [S.Formula] -> S.Theorem -> IO ()
@@ -178,7 +187,7 @@ check assumptions file'path = do
   file'handle <- openFile (List.trim file'path) ReadMode
   file'content <- hGetContents file'handle
   case parse'module file'content of
-    Left err -> do
+    Left (err, col) -> do
       putStrLn err
     Right (_, axioms, theorems) -> do
       mapM_ (try'to'prove axioms) theorems
@@ -190,27 +199,31 @@ check'verbose assumptions file'path = do
   file'handle <- openFile (List.trim file'path) ReadMode
   file'content <- hGetContents file'handle
   case parse'module file'content of
-    Left err -> do
+    Left (err, col) -> do
       putStrLn err
     Right (_, axioms, theorems) -> do
       mapM_ (try'to'prove'verbose axioms) theorems
   repl assumptions
 
 
-assume :: [S.Formula] -> String -> IO ()
-assume assumptions formula = do
+assume :: Int -> [S.Formula] -> String -> IO ()
+assume prompt'len assumptions formula = do
   case parse'formula formula of
-    Left err -> do
+    Left (err, col) -> do
+      let padding = take (prompt'len + col) $! repeat ' '
+      putStrLn $! padding ++ "^"
       putStrLn err
       repl assumptions
     Right fm -> do
       repl $! fm : assumptions
 
 
-entails :: [S.Formula] -> String -> IO ()
-entails assumptions formula = do
+entails :: Int -> [S.Formula] -> String -> IO ()
+entails prompt'len assumptions formula = do
   case parse'formula formula of
-    Left err -> do
+    Left (err, col) -> do
+      let padding = take (prompt'len + col) $! repeat ' '
+      putStrLn $! padding ++ "^"
       putStrLn err
     Right fm -> do
       try'to'prove'anon assumptions fm
@@ -228,20 +241,24 @@ consistent assumptions = do
   repl assumptions
 
 
-skolemize :: [S.Formula] -> String -> IO ()
-skolemize assumptions formula = do
+skolemize :: Int -> [S.Formula] -> String -> IO ()
+skolemize prompt'len assumptions formula = do
   case parse'formula formula of
-    Left err -> do
+    Left (err, col) -> do
+      let padding = take (prompt'len + col) $! repeat ' '
+      putStrLn $! padding ++ "^"
       putStrLn err
     Right fm -> do
       putStrLn $! show (skol'norm'form fm)
   repl assumptions
 
 
-cnf :: [S.Formula] -> String -> IO ()
-cnf assumptions formula = do
+cnf :: Int -> [S.Formula] -> String -> IO ()
+cnf prompt'len assumptions formula = do
   case parse'formula formula of
-    Left err -> do
+    Left (err, col) -> do
+      let padding = take (prompt'len + col) $! repeat ' '
+      putStrLn $! padding ++ "^"
       putStrLn err
     Right fm -> do
       if fol'formula fm
@@ -251,4 +268,4 @@ cnf assumptions formula = do
         putStrLn "   This would require skolemization, a process that might produce only a equisatisfiable formula."
       else do
         putStrLn $! show (con'norm'form fm)
-      repl assumptions
+  repl assumptions
