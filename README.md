@@ -29,7 +29,7 @@ theorem prop-modus-tollens: A => B
                           ⊢ ¬A .
 ```
 
-The grammar is quite simple.
+The syntax is quite simple.
 A file is split in three parts:
 
 - `constants`—so that you don't have to write `zero()` and so on,
@@ -51,15 +51,29 @@ You don't have to use those, the following shows the groups of symbols with the 
 | `⊤`     | `True`, `Tautology` |
 | `⊥`     | `False`, `Contradiction` |
 | `∧`     | `AND`, `&&` |
-| `∨`     | `OR`, `\|\|` |
+| `∨`     | `OR`, `\|\|`, `\|` |
 | `¬`     | `NOT`     |
-| `⟹`     | `==>`     |
-| `⟺`     | `<=>`     |
+| `⟹`     | `==>`, `=>` |
+| `⟺`     | `<=>`, `<==>` |
+
+
+### Identifiers
+
+Resin differentiates between two types of identifiers—the ones used mainly for *object variables* and the ones used for *propositional variables*.
+
+> All variables can contain a few special symbols. However, those special symbols may only come after a letter. The special symbols are: `-`, `_`, `'`, and *any digit*.
+
+When we write `∀ x P(x)`, the `x` is an *object variable* and the `P` is a *propositional variable*.
+The object variables need to begin with lower-case letter and the propositional variables (names for relations) need to begin with upper-case letter.
+
+*Functions* share the lexical requirements with object variables—they start with lower-case letter.
+When it comes to *constants* the situation is little bit more relaxed—a constant defined beforehand (in the `constants` section) can start with both, lower-case and upper-case letter. In such a case, however, constant must not be written lexically like a nullary function!
 
 
 ## Usage
 
 To build type `cabal build` and to run `cabal run`.
+
 
 ## The Interface of the REPL
 
@@ -98,7 +112,7 @@ For more examples, look into the `examples` directory.
 
 > Q: Why does this exist?
 
-> A: For me to learn about things, to implement those things (to make sure I learned them right), and to write about them (to make sure that I really got it right), and also to share the experience, knowledge and fun.
+> A: For me, to learn about things, to implement those things (to make sure I learned them right), and to write about them (to make sure that I really got it right), and also to share the experience, knowledge and fun of it.
 
 
 ## Resources
@@ -126,7 +140,7 @@ The second book's chapters 7 - 9 contain a lot of information. The whole book is
   - [x] `:assume` command that inserts a Formula into a live set of assumptions (the list of assumptions is initialized with `⊤` so the prompt looks like `⊤ ⊢`)
   - [x] `:entails` command that check whether the current list of assumptions entails a given formula
   - [x] `:consistent` command check that the current set of assumptions does not contain a contradiction
-  - [x] `:clear` comand clears the assumptions (sets it to just one ⊤)
+  - [x] `:clear` comand clears the assumptions (sets it to just one `⊤`)
   - [x] the command over formula mode
     - [x] `:skolemize` command
     - [x] `:pnf` command
@@ -134,4 +148,5 @@ The second book's chapters 7 - 9 contain a lot of information. The whole book is
     - [x] `:cnf` command
   - [x] the theorem prover mode
     - [x] normal mode
+    - [x] verbose mode
 - [ ] Support for existential queries (should give constructive answers)
