@@ -138,19 +138,24 @@ Formula     ::  { Formula }
             |   Formula '∨' Formula         { $1 `Or` $3 }
             |   Formula '==>' Formula       { $1 `Impl` $3 }
             |   Formula '<=>' Formula       { $1 `Eq` $3 }
-            |   '∀' Binder QFormula         { Forall $2 $3 } -- TODO: maybe use the scope?
-            |   '∃' Binder QFormula         { Exists $2 $3 } -- TODO: maybe use the scope?
+            |   '∀' Binders QFormula        { List.foldl' (flip Forall) $3 (List.reverse $2) }  --  NOTE: The Binders will never return an empty list, so don't worry.
+            |   '∃' Binders QFormula        { List.foldl' (flip Exists) $3 (List.reverse $2) }  --  NOTE: The Binders will never return an empty list, so don't worry.
             |   '(' Formula ')'             { $2 }
             |   '{' Formula '}'             { $2 }
             |   '[' Formula ']'             { $2 }
 
 
-Binder      ::  { String }
+Binders     ::  { [String] }
             :   LOWER                       {% do
                                                 { s <- get
                                                 ; let binders = scope s
                                                 ; put s{ scope = $1 : binders }
-                                                ; return $1 } }
+                                                ; return [ $1 ] } }
+            |   LOWER Binders               {% do
+                                                { s <- get
+                                                ; let binders = scope s
+                                                ; put s{ scope = $1 : binders }
+                                                ; return ($1 : $2) } }
 
 
 QFormula    ::  { Formula }
