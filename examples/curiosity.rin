@@ -17,3 +17,31 @@ theorem who-killed-cat: ∃ w Kills(w, Tuna) .
 
 % The following theorem is unprovable, because it is not valid.
 % theorem nobody-killed-cat : ∀ y ¬Kills(y, Tuna) .
+
+
+theorem tuna-is-dead: ∀ x ∀ y Kills(x, y) ==> Dead(y)
+                    ⊢ Dead(Tuna) .
+
+
+theorem cat-alive-or-someone-killed-it: ∀ x ∀ y Kills(x, y) ==> Dead(y)
+                                      ⊢ ¬Dead(Tuna) ∨ ∃ x Kills(x, Tuna) .
+
+
+theorem jack-did-not-kill-cat : ¬Kills(Jack, Tuna) .
+
+
+theorem curiosity-is-killer-implies-jack-didn't-kill-tuna
+        : ∀ x ∀ y Kills(x, y) <==> Killer(x)
+        ⊢ Killer(Curiosity) ==> ¬Kills(Jack, Tuna) .
+
+
+% what about the following theorem?
+% theorem curiosity-is-killer-implies-jack-isn't
+%         : ∀ x ∀ y Kills(x, y) ==> Killer(x)
+%         ⊢ Killer(Curiosity) ==> ¬Killer(Jack) .
+% what is the reason why it is not provable? (it's not valid, but why?)
+
+
+theorem curiosity-is-killer-implies-jack-sin't
+        : ∀ x ∀ y Kills(x, y) <==> Killer(x)
+        ⊢ Killer(Curiosity) ==> ¬Killer(Jack) .
