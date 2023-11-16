@@ -1,0 +1,13 @@
+constants: America, Nono, West .
+
+
+axioms: ∀ x ∀ y ∀ z (American(x) ∧ Weapon(y) ∧ Sells(x, y, z) ∧ Hostile(z)) ==> Criminal(x)
+      , ∃ x Owns(Nono, x) ∧ Missile(x)
+      , ∀ x Missile(x) ∧ Owns(Nono, x) ==> Sells(West, x, Nono)
+      , ∀ x Missile(x) ==> Weapon(x)
+      , ∀ x Enemy(x, America) ==> Hostile(x)
+      , American(West)
+      , Enemy(Nono, America) .
+
+
+theorem west-is-criminal: Criminal(West) .
