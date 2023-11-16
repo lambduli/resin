@@ -70,9 +70,14 @@ The object variables need to begin with lower-case letter and the propositional 
 When it comes to *constants* the situation is little bit more relaxed—a constant defined beforehand (in the `constants` section) can start with both, lower-case and upper-case letter. In such a case, however, constant must not be written lexically like a nullary function!
 
 
+### Quantifiers
+
+If there's a sequence of the same kind of quantifier like `∀ x ∀ y ∀ z ...` you can shorten it to just `∀ x y z ...`.
+
+
 ## Usage
 
-To build type `cabal build` and to run `cabal run`.
+To build and run, type `cabal build` and `cabal run`.
 
 
 ## The Interface of the REPL
@@ -101,7 +106,7 @@ There are also a few commands for a simple transformation on formulae.
 
 9) To put a formula `ƒ` into a *Skolem Normal Form*, type `:skolemize <ƒ>`.
 
-10) To put a propositional formula `ƒ` into a *Conjunction Normal Form*, type `:cnf <ƒ>`.
+10) To put a propositional formula `ƒ` into a *Conjunction Normal Form*, type `:cnf <ƒ>`. However, be aware that this will only work when the formula does not contain existential quantifiers. Those require skolemization and that leads to only *equisatisfiable* not *equivalent* formulae. The tool will reject formulae with `∃` with `:cnf` command.
 
 
 ______
