@@ -521,14 +521,14 @@ con'norm'form :: Formula -> Formula
 con'norm'form = specialize . prenex . a'skolemize -- roughly: skolem . nnf . simplify
 
 
-fol'formula :: Formula -> Bool
-fol'formula S.True = False
-fol'formula S.False = False
-fol'formula (Atom _) = False
-fol'formula (Not p) = fol'formula p
-fol'formula (And p q) = fol'formula p || fol'formula q
-fol'formula (Or p q) = fol'formula p || fol'formula q
-fol'formula (Impl p q) = fol'formula p || fol'formula q
-fol'formula (Eq p q) = fol'formula p || fol'formula q
-fol'formula (Forall _ p) = fol'formula p
-fol'formula (Exists _ _) = True
+features'exists :: Formula -> Bool
+features'exists S.True = False
+features'exists S.False = False
+features'exists (Atom _) = False
+features'exists (Not p) = features'exists p
+features'exists (And p q) = features'exists p || features'exists q
+features'exists (Or p q) = features'exists p || features'exists q
+features'exists (Impl p q) = features'exists p || features'exists q
+features'exists (Eq p q) = features'exists p || features'exists q
+features'exists (Forall _ p) = features'exists p
+features'exists (Exists _ _) = True
