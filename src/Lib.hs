@@ -428,7 +428,12 @@ mgu (a : b : rest) env
   = case unify'literals env (a, b) of
       Nothing -> Nothing
       Just env' -> mgu (b : rest) env'
-mgu _ env = Just $! solve env
+mgu _ env = 
+  let begin = trace ("mgu called and I will call SOLVE") env
+      solved = solve begin
+      result = Just solved
+      bla = trace ("mgu solved and finished") result
+  in  bla
 
 
 unifiable :: Formula -> Formula -> Bool

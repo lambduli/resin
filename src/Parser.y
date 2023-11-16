@@ -81,8 +81,13 @@ Constants   ::  { [String] }
 
 
 Consts      ::  { [String] }
-            :   LOWER                       { [ $1 ] }
-            |   LOWER ',' Consts            { $1 : $3 }
+            :   Constant                    { [ $1 ] }
+            |   Constant ',' Consts         { $1 : $3 }
+
+
+Constant    ::  { String }
+            :   LOWER                       { $1 }
+            |   UPPER                       { $1 }
 
 
 Axioms      ::  { [Formula] }
@@ -178,7 +183,7 @@ Term        ::  { Term }
                                                 ; binders <- gets scope
                                                 ; col'now <- gets (ai'col'no . lexer'input)
                                                 ; let col'no = col'now - List.length $1
-                                                ; rest <- gets (ai'input . lexer'input)
+                                                -- ; rest <- gets (ai'input . lexer'input)
                                                 ; let is'constant = $1 `elem` consts
                                                 ; let is'bound = $1 `elem` binders
                                                 ; if is'constant
@@ -186,6 +191,17 @@ Term        ::  { Term }
                                                   else  if is'bound
                                                         then return (Var $1)
                                                         else throwError ("Parsing Error: Unbound variable `" ++ $1 ++ "'.", col'no) } }
+            |   UPPER                       {%  do
+                                                { consts <- gets constants
+                                                -- ; binders <- gets scope
+                                                ; col'now <- gets (ai'col'no . lexer'input)
+                                                ; let col'no = col'now - List.length $1
+                                                -- ; rest <- gets (ai'input . lexer'input)
+                                                -- ; let is'constant = $1 `elem` consts
+                                                -- ; let is'bound = $1 `elem` binders
+                                                ; if $1 `elem` consts
+                                                  then return (Fn $1 [])
+                                                  else throwError ("Parsing Error: Unknown constant `" ++ $1 ++ "'.", col'no) } }
             |   LOWER TermArgsM             { Fn $1 $2 }
 
 
