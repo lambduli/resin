@@ -90,6 +90,10 @@ There are also a few commands for a simple transformation on formulae.
 10) To put a propositional formula `ƒ` into a *Conjunction Normal Form*, type `:cnf <ƒ>`.
 
 
+______
+
+For more examples, look into the `examples` directory.
+
 ## Q&A
 
 > Q: Why does this exist?
@@ -99,9 +103,14 @@ There are also a few commands for a simple transformation on formulae.
 
 ## Resources
 
-[Handbook of Practical Logic and Automated Reasoning](https://www.cl.cam.ac.uk/~jrh13/atp/)
+1. [Handbook of Practical Logic and Automated Reasoning](https://www.cl.cam.ac.uk/~jrh13/atp/)
 
-The source code has been extracted from the book and only slightly modified.
+2. [Artificial Intelligence: A Modern Approach](https://aima.cs.berkeley.edu)
+
+
+The first book is the where the source code comes from. It has been only slightly modified to end up being as close to the book's implementation as possible.
+
+The second book's chapters 7 - 9 contain a lot of information. The whole book is a good starting place for beginners in the topic, however, sometimes the book does not go into much details regarding some operations—one must use different resource for that, perhaps the first book.
 
 
 ## TODO
