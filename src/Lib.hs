@@ -368,10 +368,8 @@ is'triv env x (Var y)
   = y == x || y `Map.member` env && is'triv env x term
   where Just term = y `Map.lookup` env  -- NOTE: This pattern match is non-exhaustive but here, it's safe.
 
-is'triv _ _ _ = False
-
--- is'triv env x (Fn _ terms)
---   = List.any (is'triv env x) terms
+is'triv env x (Fn _ terms)
+  = List.any (is'triv env x) terms
 
 
 occurs'fails :: Map.Map String Term -> String -> Term -> Bool
@@ -428,12 +426,7 @@ mgu (a : b : rest) env
   = case unify'literals env (a, b) of
       Nothing -> Nothing
       Just env' -> mgu (b : rest) env'
-mgu _ env = 
-  let begin = trace ("mgu called and I will call SOLVE") env
-      solved = solve begin
-      result = Just solved
-      bla = trace ("mgu solved and finished") result
-  in  bla
+mgu _ env = Just $! solve env
 
 
 unifiable :: Formula -> Formula -> Bool

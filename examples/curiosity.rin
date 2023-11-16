@@ -1,0 +1,18 @@
+constants: Jack, Tuna, Curiosity .
+
+
+% axioms: ∀ x [∀ y Animal(y) ==> Loves(x, y)] ==> [∃ y Loves(y, x)]
+%       , ∀ x [∃ z Animal(z) ∧ Kills(x, z)] ==> [∀ y ¬Loves(y, x)]
+%       , ∀ x Animal(x) ==> Loves(Jack, x)
+%       , Kills(Jack, Tuna) ∨ Kills(Curiosity, Tuna)
+%       , Cat(Tuna)
+%       , ∀ x Cat(x) ==> Animal(x) .
+
+
+theorem did-curiosity-kill-cat: ∀ x [∀ y Animal(y) ==> Loves(x, y)] ==> [∃ y Loves(y, x)]
+                              , ∀ x [∃ z Animal(z) ∧ Kills(x, z)] ==> [∀ y ¬Loves(y, x)]
+                              , ∀ x Animal(x) ==> Loves(Jack, x)
+                              , Kills(Jack, Tuna) ∨ Kills(Curiosity, Tuna)
+                              , Cat(Tuna)
+                              , ∀ x Cat(x) ==> Animal(x)
+                              ⊢ Kills(Curiosity, Tuna) .
