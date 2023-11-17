@@ -1,0 +1,44 @@
+constants: zero .
+
+
+axioms: ∀ n Plus(zero, n, n)
+      , ∀ n m r Plus(n, m, r) ==> Plus(suc(n), m, suc(r))
+      , ∀ n Times(zero, n, zero)
+      , ∀ n m r a [Times(n, m, r) ∧ Plus(r, m, a) ==> Times(suc(n), m, a)]
+      , Fact(zero, suc(zero))
+      , ∀ n pr r [Fact(n, pr) ∧ Times(suc(n), pr, r) ==> Fact(suc(n), r)]
+      % , Nat(zero)
+      % , ∀ n Nat(n) ==> Nat(suc(n))
+      .
+
+
+% OK
+theorem zero-plus-one-is-one: Plus(zero, suc(zero), suc(zero)) .
+
+
+% OK
+theorem n-plus-1-is-suc-n : ∀ n Plus(suc(zero), n, suc(n)) .
+
+
+% CAN'T
+% theorem sum-zero-rhs: ∀ n Plus(n, zero, n) .
+
+
+% theorem plus-is-total : ∀ m n ∃ o Plus(m, n, o) .
+
+
+theorem fact-zero-is-one: Fact(zero, suc(zero)) .
+
+theorem exists-fact-for-one : ∃ n Fact(n, suc(zero)) .
+
+theorem exists-fact-for-two : ∃ n Fact(n, suc(suc(zero))) .
+
+
+% theorem fact-one-of : One(suc(zero))
+%                     , ∀ n One(n) ==> 
+%                     , Zero(zero)
+%                     , ∀ n Zero(n) ==> Zero(zero)
+%                     ⊢ ∀ n Fact(n, suc(zero)) ==> One(n) ∨ Zero(n) .
+
+
+% theorem exists-fact-for-six : ∃ n Fact(n, suc(suc(suc(suc(suc(suc(zero))))))) .

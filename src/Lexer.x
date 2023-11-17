@@ -30,6 +30,8 @@ $digit                = [0-9]
 
 @upperident           = $upper [$lower $upper \- \_ $digit \']*
 
+@number               = [$upper]+
+
 $space                = [\ \t\f\v\n]
 
 
@@ -105,6 +107,8 @@ $space+                 ;
 @lowerident             { emit Token.Lower'Var }
 
 @upperident             { emit Token.Upper'Var }
+
+@number                 { emit Token.Number }
 
 
 {

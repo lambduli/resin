@@ -1,7 +1,7 @@
 {
 {-# LANGUAGE FlexibleContexts #-}
 
-module Parser ( parse'module, parse'theorems, parse'formula ) where
+module Parser ( parse'module, parse'theorems, parse'formula, parse'two'formulae ) where
 
 import Control.Monad.Except ( throwError )
 import Control.Monad.State ( MonadState(get, put), gets )
@@ -19,7 +19,8 @@ import Syntax qualified as S
 
 %name parseModule Module
 %name parseTheorems Theorems
-%name parseFormula Formula 
+%name parseFormula Formula
+%name parseTwoFormulae Formulae
 
 %tokentype { Token }
 %monad { Lexer }
@@ -32,6 +33,8 @@ import Syntax qualified as S
   UPPER       { Token.Upper'Var $$ }
 
   LOWER       { Token.Lower'Var $$ }
+
+  NUMBER      { Token.Number $$ }
 
   ','         { Token.Comma }
   '.'         { Token.Period }
@@ -88,6 +91,7 @@ Consts      ::  { [String] }
 Constant    ::  { String }
             :   LOWER                       { $1 }
             |   UPPER                       { $1 }
+            |   NUMBER                      { $1 }
 
 
 Axioms      ::  { [Formula] }
@@ -127,6 +131,10 @@ AssumpsRest ::  { [Formula] }
 
 Conclusion  ::  { Formula }
             :   Formula                     { $1 }
+
+
+Formulae    ::  { (Formula, Formula) }
+            :   Formula ',' Formula         { ($1, $3) }
 
 
 Formula     ::  { Formula }
@@ -187,6 +195,7 @@ Term        ::  { Term }
                                                 { consts <- gets constants
                                                 ; binders <- gets scope
                                                 ; col'now <- gets (ai'col'no . lexer'input)
+                                                ; l'no <- gets (ai'line'no . lexer'input)
                                                 ; let col'no = col'now - List.length $1
                                                 -- ; rest <- gets (ai'input . lexer'input)
                                                 ; let is'constant = $1 `elem` consts
@@ -195,18 +204,31 @@ Term        ::  { Term }
                                                   then return (Fn $1 [])
                                                   else  if is'bound
                                                         then return (Var $1)
-                                                        else throwError ("Parsing Error: Unbound variable `" ++ $1 ++ "'.", col'no) } }
+                                                        else throwError ("Parsing Error: Unbound variable `" ++ $1 ++ "' on line " ++ show l'no ++ " column " ++ show col'no ++ ".", col'no) } }
             |   UPPER                       {%  do
                                                 { consts <- gets constants
                                                 -- ; binders <- gets scope
                                                 ; col'now <- gets (ai'col'no . lexer'input)
+                                                ; l'no <- gets (ai'line'no . lexer'input)
                                                 ; let col'no = col'now - List.length $1
                                                 -- ; rest <- gets (ai'input . lexer'input)
                                                 -- ; let is'constant = $1 `elem` consts
                                                 -- ; let is'bound = $1 `elem` binders
                                                 ; if $1 `elem` consts
                                                   then return (Fn $1 [])
-                                                  else throwError ("Parsing Error: Unknown constant `" ++ $1 ++ "'.", col'no) } }
+                                                  else throwError ("Parsing Error: Unknown constant `" ++ $1 ++ "' on line " ++ show l'no ++ " column " ++ show col'no ++ ".", col'no) } }
+            |   NUMBER                      {%  do
+                                                { consts <- gets constants
+                                                -- ; binders <- gets scope
+                                                ; col'now <- gets (ai'col'no . lexer'input)
+                                                ; l'no <- gets (ai'line'no . lexer'input)
+                                                ; let col'no = col'now - List.length $1
+                                                -- ; rest <- gets (ai'input . lexer'input)
+                                                -- ; let is'constant = $1 `elem` consts
+                                                -- ; let is'bound = $1 `elem` binders
+                                                ; if $1 `elem` consts
+                                                  then return (Fn $1 [])
+                                                  else throwError ("Parsing Error: Unknown numeric constant `" ++ $1 ++ "' on line " ++ show l'no ++ " column " ++ show col'no ++ ".", col'no) } }
             |   LOWER TermArgsM             { Fn $1 $2 }
 
 
@@ -221,6 +243,10 @@ parse'theorems source = mapRight fst $! eval'parser parseTheorems source
 
 parse'formula :: String -> Either (String, Int) Formula
 parse'formula source = mapRight fst $! eval'parser parseFormula source
+
+
+parse'two'formulae :: String -> Either (String, Int) (Formula, Formula)
+parse'two'formulae source = mapRight fst $! eval'parser parseTwoFormulae source
 
 
 parseError _ = do

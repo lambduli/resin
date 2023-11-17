@@ -7,12 +7,13 @@ import System.IO ( hFlush, stdout, openFile, IOMode(ReadMode), hGetContents )
 import Control.Monad ( mapM_ )
 import Data.List qualified as List
 import Data.List.Extra qualified as List
+import Data.Set qualified as Set
 
 
 import Lexer ( lexer, {- use'lexer, -} read'token )
-import Parser ( parse'theorems, parse'formula, parse'module )
+import Parser ( parse'theorems, parse'formula, parse'module, parse'two'formulae )
 import Syntax qualified as S
-import Lib ( resolution, pure'resolution', pren'norm'form, pnf, specialize, a'skolemize, skol'norm'form, simp'cnf, con'norm'form, list'conj, simp'dnf, fv, negate, neg'norm'form, nnf, features'exists )
+import Lib ( resolution, pure'resolution', pren'norm'form, pnf, specialize, skolemise, a'skolemize, skol'norm'form, simp'cnf, con'norm'form, list'conj, simp'dnf, fv, negate, neg'norm'form, nnf, features'exists, resolve'clauses, list'disj, list'conj, generalize )
 
 
 main :: IO ()
@@ -110,6 +111,21 @@ repl assumptions = do
         Right fm -> do
           putStrLn $! show (pren'norm'form fm)
       repl assumptions
+
+    ':' : 'r' : 'e' : 's' : 'o' : 'l' : 'v' : 'e' : ' ' : formulae -> do
+      case parse'two'formulae formulae of
+        Left (err, col) -> do
+          let padding = take (prompt'len + 5 + col) $! repeat ' '
+          putStrLn $! padding ++ "^"
+          putStrLn err
+        Right (fm1, fm2) -> do
+          let cl1 = simp'cnf . specialize . skolemise $! fm1
+          let cl2 = simp'cnf . specialize . skolemise $! fm2
+
+          let resolvents = Set.toList $! Set.map list'disj $! resolve'clauses (List.head cl1) (List.head cl2)
+          putStrLn $! List.intercalate "\n" (map (show . generalize) resolvents)
+      repl assumptions
+
 
     -- ':' : 't' : 'o' : 'k' : ' ' : input -> do
     --   let tokens = use'lexer read'token input
@@ -266,6 +282,7 @@ cnf prompt'len assumptions formula = do
         putStrLn "⚠️  I can't perform the CNF conversion on a non-propositional formula."
         putStrLn "   The formula contains existential quantifiers."
         putStrLn "   This would require skolemization, a process that might produce only a equisatisfiable formula."
+        putStrLn $! show (con'norm'form fm)
       else do
         putStrLn $! show (con'norm'form fm)
   repl assumptions

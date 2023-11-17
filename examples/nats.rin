@@ -3,7 +3,7 @@ constants: zero, blah .
 
 
 % and axioms
-axioms: ∀ n (Nat(n)) ==> Nat(suc(n))
+axioms: ∀ n Nat(n) ==> Nat(suc(n))
       , Nat(zero) .
 
 

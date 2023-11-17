@@ -3,6 +3,7 @@ module Token ( Token(..) ) where
 
 data Token  = Upper'Var String
             | Lower'Var String
+            | Number String
 
             --  keywords
             | Comma           --  ,

@@ -30,7 +30,7 @@ data Formula  = True                    -- ⊤
 
 instance Show Term where
   show (Var n) = n
-  show (Fn n []) = n
+  show (Fn n []) = n ++ "ᶜ"
   show (Fn n terms) = n ++ "(" ++ intercalate ", " (map show terms) ++ ")"
 
 
@@ -64,11 +64,11 @@ instance Show Formula where
   show (Or p q) = show p ++ " ∨ " ++ show q
   -- show (Or p q) = "[" ++ show p ++ "] ∨ [" ++ show q ++ "]"   -- just leaving this for future debugging
 
-  show (Impl p q) = show p ++ " ==> " ++ show q
-  -- show (Impl p q) = "(" ++ show p ++ " ==> " ++ show q ++ ")"
+  -- show (Impl p q) = show p ++ " ==> " ++ show q
+  show (Impl p q) = "(" ++ show p ++ ") ==> (" ++ show q ++ ")"
 
-  show (Eq p q) = show p ++ " <==> " ++ show q
-  -- show (Eq p q) = "(" ++ show p ++ " <==> " ++ show q ++ ")"
+  -- show (Eq p q) = show p ++ " <==> " ++ show q
+  show (Eq p q) = "(" ++ show p ++ ") <==> (" ++ show q ++ ")"
 
   show (Forall x p) = "∀ " ++ x ++ " " ++ show p
   show (Exists x p) = "∃ " ++ x ++ " " ++ show p

@@ -182,8 +182,8 @@ fv (Forall x p) = Set.delete x (fv p)
 fv (Exists x p) = Set.delete x (fv p)
 
 
--- generalize :: Formula -> Formula
--- generalize fm = List.foldr Forall fm (fv fm)
+generalize :: Formula -> Formula
+generalize fm = List.foldr Forall fm (fv fm)
 
 
 t'subst :: Map.Map String Term -> Term -> Term
@@ -490,6 +490,7 @@ res'loop (used, (cl : cls))
   = let used' = cl : used
         resolvents = map (resolve'clauses cl) used'
         news = foldl' Set.union Set.empty resolvents
+        -- news' = trace ("news= " ++ show news) news
     in  ([] `List.elem` news) || res'loop (used', cls ++ Set.toList news)
 
 
