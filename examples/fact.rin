@@ -29,9 +29,11 @@ theorem n-plus-1-is-suc-n : ∀ n Plus(suc(zero), n, suc(n)) .
 
 theorem fact-zero-is-one: Fact(zero, suc(zero)) .
 
+theorem fact-one-is-one : Fact(suc(zero), suc(zero)) .
+
 theorem exists-fact-for-one : ∃ n Fact(n, suc(zero)) .
 
-theorem exists-fact-for-two : ∃ n Fact(n, suc(suc(zero))) .
+% theorem exists-fact-for-two : ∃ n Fact(suc(suc(n)), suc(suc(zero))) .
 
 
 % theorem fact-one-of : One(suc(zero))

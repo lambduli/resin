@@ -483,15 +483,63 @@ resolve'clauses cls1 cls2
     in  foldl' (\ ress cls -> resolvents cls1' cls2' cls ress) Set.empty cls1'
 
 
+{-  SUBSUMPTION  -}
+
+
+term'match :: Map.Map String Term -> [(Term, Term)] -> Maybe (Map.Map String Term)
+term'match env [] = Just env
+term'match env ((Fn f fa, Fn g ga) : oth)
+  | f == g && length ga == length ga = term'match env (zip fa ga ++ oth)
+term'match env ((Var x, t) : oth)
+  = if not (x `Map.member` env)
+    then term'match (Map.insert x t env) oth
+    else Nothing
+term'match _ _ = Nothing
+
+
+match'literals :: Map.Map String Term -> (Formula, Formula) -> Maybe (Map.Map String Term)
+match'literals env (Atom (Rel p a1), Atom (Rel q a2))
+  = term'match env [(Fn p a1, Fn q a2)]
+match'literals env (Not (Atom (Rel p a1)), Not (Atom (Rel q a2)))
+  = term'match env [(Fn p a1, Fn q a2)]
+match'literals _ _ = Nothing
+
+
+subsumes'clause :: [Formula] -> [Formula] -> Bool
+subsumes'clause cl1 cl2 = subsume Map.empty cl1
+  where subsume :: Map.Map String Term -> [Formula] -> Bool
+        subsume _ [] = True
+        subsume env (l1 : clt)
+          = List.any (\ l2 -> case match'literals env (l1, l2) of
+                                Nothing -> False
+                                Just env -> subsume env clt) cl2
+
+
+replace :: [Formula] -> [[Formula]] -> [[Formula]]
+replace cl [] = [cl]
+replace cl (c : cls)
+  = if subsumes'clause cl c
+    then cl : cls
+    else c : replace cl cls
+
+
+incorporate :: [Formula] -> [Formula] -> [[Formula]] -> [[Formula]]
+incorporate gcl cl unused
+  = if trivial cl|| List.any (\ c -> subsumes'clause c cl) (gcl : unused)
+    then unused
+    else replace cl unused
+
+
 res'loop :: ([[Formula]], [[Formula]]) -> Bool
 res'loop (_, []) = False -- the book raises an error, I don't see why
-
 res'loop (used, (cl : cls))
-  = let used' = cl : used
+  = let used' = Set.toList $! cl `Set.insert` Set.fromList used
         resolvents = map (resolve'clauses cl) used'
         news = foldl' Set.union Set.empty resolvents
         -- news' = trace ("news= " ++ show news) news
-    in  ([] `List.elem` news) || res'loop (used', cls ++ Set.toList news)
+        fn a b = incorporate cl b a
+    in  ([] `List.elem` news) || res'loop (used', List.foldl' fn cls (Set.toList news))
+    -- in  ([] `List.elem` news) || res'loop (used', cls ++ Set.toList news)
 
 
 pure'resolution' :: Formula -> Bool

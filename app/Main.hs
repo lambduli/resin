@@ -4,6 +4,7 @@ module Main where
 import Prelude hiding ( negate )
 
 import System.IO ( hFlush, stdout, openFile, IOMode(ReadMode), hGetContents )
+import System.Environment ( getArgs )
 import Control.Monad ( mapM_ )
 import Data.List qualified as List
 import Data.List.Extra qualified as List
@@ -18,9 +19,14 @@ import Lib ( resolution, pure'resolution', pren'norm'form, pnf, specialize, skol
 
 main :: IO ()
 main = do
-  putStrLn "Resin — a toy automated theorem prover for classical First Order Logic."
-  repl [S.True]
-  putStrLn "Bye!"
+  args <- getArgs
+  case args of
+    [] -> do
+      putStrLn "Resin — a toy automated theorem prover for classical First Order Logic."
+      repl [S.True]
+      putStrLn "Bye!"
+    _ -> do
+      mapM_ (check [S.True]) args
 
 
 repl :: [S.Formula] -> IO ()
@@ -40,12 +46,14 @@ repl assumptions = do
 
     ':' : 'c' : 'h' : 'e' : 'c' : 'k' : ' ' : file'path -> do
       check assumptions file'path
+      repl assumptions
 
     ':' : 'c' : 'h' : ' ' : 'v' : 'e' : 'r' : ' ' : file'path -> do
       check'verbose assumptions file'path
 
     ':' : 'c' : 'h' : ' ' : file'path -> do
       check assumptions file'path
+      repl assumptions
 
     ':' : 'a' : 's' : 's' : 'u' : 'm' : 'e' : ' ' : formula -> do
       assume (prompt'len + 8) assumptions formula
@@ -207,7 +215,6 @@ check assumptions file'path = do
       putStrLn err
     Right (_, axioms, theorems) -> do
       mapM_ (try'to'prove axioms) theorems
-  repl assumptions
 
 
 check'verbose :: [S.Formula] -> String -> IO ()
