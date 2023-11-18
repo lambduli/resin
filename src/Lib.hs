@@ -12,6 +12,9 @@ import Syntax ( Rel(..), Term(..), Formula(Atom, Not, And, Or, Impl, Eq, Forall,
 import Syntax qualified as S
 
 
+import Debug.Trace ( trace )
+
+
 over'atoms :: (Rel -> b -> b) -> Formula -> b -> b
 over'atoms f (Atom rel) b = f rel b
 over'atoms f (Not p) b = over'atoms f p b
@@ -525,24 +528,68 @@ replace cl (c : cls)
 
 incorporate :: [Formula] -> [Formula] -> [[Formula]] -> [[Formula]]
 incorporate gcl cl unused
-  = if trivial cl|| List.any (\ c -> subsumes'clause c cl) (gcl : unused)
+  = if trivial cl || List.any (\ c -> subsumes'clause c cl) (gcl : unused)
     then unused
     else replace cl unused
 
 
+
+
+replace' :: [Formula] -> Set.Set [Formula] -> Set.Set [Formula]
+replace' cl clauses | Set.null clauses = Set.singleton cl
+replace' cl clauses
+  = let c   = Set.elemAt 0 clauses
+        cls = Set.deleteAt 0 clauses
+    in  if subsumes'clause cl c
+        then cl `Set.insert` cls
+        else c `Set.insert` replace' cl cls
+
+
+incorporate' :: [Formula] -> [Formula] -> Set.Set [Formula] -> Set.Set [Formula]
+incorporate' gcl cl unused
+  = if trivial cl || List.any (\ c -> subsumes'clause c cl) (gcl `Set.insert` unused)
+    then unused
+    else replace' cl unused
+
+
+res'loop' :: (Set.Set [Formula], Set.Set [Formula]) -> Bool
+res'loop' (used, unused)
+  | Set.null unused = False
+  | otherwise = let cl = Set.elemAt 0 unused
+                    cls = Set.deleteAt 0 unused
+
+                    used' = cl `Set.insert` used
+                    resolvents = Set.map (resolve'clauses cl) used'
+                    news = Set.foldl' Set.union Set.empty resolvents
+                    news' = trace ("#used= " ++ show (length used) ++ " | size of cl= " ++ show (length cl) ++ "\nsize of unused= " ++ show (Set.size unused) {- ++ "\ncl= " ++ show cl -}) news
+                    fn acc new = incorporate' cl new acc
+
+                    new'unused = Set.foldl' fn cls news'
+                    -- new'unused = cls `Set.union` news'
+
+                    how'many'actually = (Set.size news') - ((Set.size new'unused) - (Set.size cls))
+                    new'un' = trace ("news count= " ++ show (Set.size news') ++ " | cls count= " ++ show (Set.size cls) ++ " | new'un' count= " ++ show (Set.size new'unused) ++ "\n || how many actually NOT ADDED= " ++ show (how'many'actually) ) new'unused
+                in  ([] `Set.member` news') || res'loop' (used', new'un')
+
 res'loop :: ([[Formula]], [[Formula]]) -> Bool
 res'loop (_, []) = False -- the book raises an error, I don't see why
-res'loop (used, (cl : cls))
+res'loop (used, unused@(cl : cls))
   = let used' = Set.toList $! cl `Set.insert` Set.fromList used
         resolvents = map (resolve'clauses cl) used'
         news = foldl' Set.union Set.empty resolvents
         -- news' = trace ("news= " ++ show news) news
+        -- news' = trace ("#used= " ++ show (length used) ++ " | size of cl= " ++ show (length cl) ++ "\nsize of unused= " ++ show (length unused)) news
         fn a b = incorporate cl b a
-    in  ([] `List.elem` news) || res'loop (used', List.foldl' fn cls (Set.toList news))
-    -- in  ([] `List.elem` news) || res'loop (used', cls ++ Set.toList news)
+
+        new'unused = List.foldl' fn cls (Set.toList news)
+        -- new'un = trace ("how many actually NOT SAVED= " ++ show ((Set.size news') - ((List.length new'unused) - (List.length cls)))) new'unused
+    -- in  ([] `List.elem` news) || res'loop (used', new'unused)
+    in  ([] `List.elem` news) || res'loop (used', cls ++ Set.toList news)
+    -- in  ([] `List.elem` news') || res'loop (used', Set.toList news' ++ cls)
 
 
 pure'resolution' :: Formula -> Bool
+-- pure'resolution' fm = res'loop' (Set.empty, Set.fromList . simp'cnf . specialize . skolemise $! fm)
 pure'resolution' fm = res'loop ([], simp'cnf . specialize . skolemise $! fm)
 
 
