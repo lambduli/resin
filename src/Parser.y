@@ -233,19 +233,18 @@ Term        ::  { Term }
                                                 ; if $1 `elem` consts
                                                   then return (Fn $1 [])
                                                   else throwError ("Parsing Error: Unknown numeric constant `" ++ $1 ++ "' on line " ++ show l'no ++ " column " ++ show col'no ++ ".", col'no) } }
+            |   NUMBER C                    { Fn $1 [] }
             |   LOWER TermArgsM             { Fn $1 $2 }
-            |   UPPER TermArgsM             {%  do
-                                                { consts <- gets constants
-                                                -- ; binders <- gets scope
-                                                ; col'now <- gets (ai'col'no . lexer'input)
-                                                ; l'no <- gets (ai'line'no . lexer'input)
-                                                ; let col'no = col'now - List.length $1
-                                                -- ; rest <- gets (ai'input . lexer'input)
-                                                -- ; let is'constant = $1 `elem` consts
-                                                -- ; let is'bound = $1 `elem` binders
-                                                ; if $1 `elem` consts
-                                                  then return (Fn $1 $2)
-                                                  else throwError ("Parsing Error: Unknown constant `" ++ $1 ++ "' on line " ++ show l'no ++ " column " ++ show col'no ++ ".", col'no) } }
+            |   UPPER TermArgsM             { Fn $1 $2 }
+                                            -- {%  do
+                                            --     { consts <- gets constants
+                                            --     ; col'now <- gets (ai'col'no . lexer'input)
+                                            --     ; l'no <- gets (ai'line'no . lexer'input)
+                                            --     ; let col'no = col'now - List.length $1
+                                            --     ; if $1 `elem` consts
+                                            --       then return (Fn $1 $2)
+                                            --       else throwError ("Parsing Error: Unknown constant `" ++ $1 ++ "' on line " ++ show l'no ++ " column " ++ show col'no ++ ".", col'no) } }
+            |   '(' Term ')'                { $2 }
 
 
 {
