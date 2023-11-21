@@ -27,7 +27,7 @@ main = do
       putStrLn "Bye!"
     _ -> do
       mapM_ (check [S.True]) args
-      repl [S.True]
+      -- repl [S.True]
 
 
 repl :: [S.Formula] -> IO ()
