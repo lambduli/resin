@@ -14,7 +14,7 @@ import Data.Set qualified as Set
 import Lexer ( lexer, {- use'lexer, -} read'token )
 import Parser ( parse'theorems, parse'formula, parse'module, parse'two'formulae )
 import Syntax qualified as S
-import Lib ( resolution, pure'resolution', pren'norm'form, pnf, specialize, skolemise, a'skolemize, skol'norm'form, simp'cnf, con'norm'form, list'conj, simp'dnf, fv, negate, neg'norm'form, nnf, features'exists, resolve'clauses, list'disj, list'conj, generalize )
+import Lib ( resolution, resolution'', pure'resolution', pren'norm'form, pnf, specialize, skolemise, a'skolemize, skol'norm'form, simp'cnf, con'norm'form, list'conj, simp'dnf, fv, negate, neg'norm'form, nnf, features'exists, resolve'clauses, list'disj, list'conj, generalize )
 
 
 main :: IO ()
@@ -27,12 +27,13 @@ main = do
       putStrLn "Bye!"
     _ -> do
       mapM_ (check [S.True]) args
+      -- repl [S.True]
 
 
 repl :: [S.Formula] -> IO ()
 repl assumptions = do
   let context = List.intercalate ", " (map show assumptions)
-  let short'context = (List.take 15 context) ++ if List.length context > 15 then "..." else ""
+  let short'context = (List.take 15 context) ++ if List.length context > 15 then " ..." else ""
   let prompt'len = List.length short'context + 3 - 1
   putStr $! short'context ++ " ⊢ "
   hFlush stdout
@@ -71,6 +72,9 @@ repl assumptions = do
 
     ':' : 'e' : ' ' : formula -> do
       entails (prompt'len + 3) assumptions formula
+
+    ':' : 'f' : 'i' : 'n' : 'd' : ' ' : formula -> do
+      find (prompt'len + 6) assumptions formula
 
     ':' : 'c' : 'o' : 'n' : 's' : 'i' : 's' : 't' : 'e' : 'n' : 't' : _ -> do
       consistent assumptions
@@ -200,9 +204,9 @@ try'to'prove'anon assumptions conclusion = do
   let is'valid = resolution assumptions conclusion
   if is'valid
   then do
-    putStrLn $! "✅ the conclusion  `" ++ show conclusion ++ "'  is logical consequence of the assumptions"
+    putStrLn $! "✅ the conclusion  `" ++ show conclusion ++ "'  is a logical consequence of the assumptions"
   else do
-    putStrLn $! "❌ the conclusion  `" ++ show conclusion ++ "'  is not logical consequence of the assumptions"
+    putStrLn $! "❌ the conclusion  `" ++ show conclusion ++ "'  is not a logical consequence of the assumptions"
     putStrLn $! "            an interpretation where all the assumptions and `" ++ show (nnf . negate $! conclusion) ++ "' all hold is possible"
 
 
@@ -250,6 +254,27 @@ entails prompt'len assumptions formula = do
       putStrLn err
     Right fm -> do
       try'to'prove'anon assumptions fm
+  repl assumptions
+
+
+find :: Int -> [S.Formula] -> String -> IO ()
+find prompt'len assumptions formula = do
+  case parse'formula formula of
+    Left (err, col) -> do
+      let padding = take (prompt'len + col) $! repeat ' '
+      putStrLn $! padding ++ "^"
+      putStrLn err
+    Right conclusion -> do
+      -- try'to'prove'anon assumptions fm
+      case resolution'' assumptions conclusion of
+        Nothing -> do
+          putStrLn $! "❌ no such objects found, `" ++ show conclusion ++ "'  is not a logical consequence of the assumptions"
+          putStrLn $! "            an interpretation where all the assumptions and `" ++ show (nnf . negate $! conclusion) ++ "' all hold is possible"
+        Just answers -> do
+          putStrLn $! "✅ the conclusion  `" ++ show conclusion ++ "'  is a logical consequence of the assumptions"
+          let assignment = map (\ (exis, term) -> "   for `" ++ exis ++ "' being `" ++ show term ++ "'") answers
+          putStrLn $! List.intercalate ", " assignment
+          -- putStrLn $! show answers
   repl assumptions
 
 

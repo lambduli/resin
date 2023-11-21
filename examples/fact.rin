@@ -3,6 +3,9 @@ constants: zero .
 
 axioms: ∀ n Plus(zero, n, n)
       , ∀ n m r Plus(n, m, r) ==> Plus(suc(n), m, suc(r))
+      % , Plus(zero, zero, zero) % redundant
+      % , [∀ n m r Plus(n, m, r) ==> Plus(suc(n), m, suc(r))] ==> ∀ o ∃ m n Plus(m, n, o) % redundant
+      , ∀b ([∀ k (∃ c Plus(k, b, c) ==> ∃ c Plus(suc(k), b, c))] ==> ∀ n ∃ c Plus(n, b, c))
       , ∀ n Times(zero, n, zero)
       , ∀ n m r a [Times(n, m, r) ∧ Plus(r, m, a) ==> Times(suc(n), m, a)]
       , Fact(zero, suc(zero))
@@ -20,11 +23,11 @@ theorem zero-plus-one-is-one: Plus(zero, suc(zero), suc(zero)) .
 theorem n-plus-1-is-suc-n : ∀ n Plus(suc(zero), n, suc(n)) .
 
 
-% CAN'T
+% CAN'T TODO: figure out what inductive property does it require
 % theorem sum-zero-rhs: ∀ n Plus(n, zero, n) .
 
 
-% theorem plus-is-total : ∀ m n ∃ o Plus(m, n, o) .
+theorem plus-is-total : ∀ m n ∃ o Plus(m, n, o) .
 
 
 theorem fact-zero-is-one: Fact(zero, suc(zero)) .
@@ -33,7 +36,17 @@ theorem fact-one-is-one : Fact(suc(zero), suc(zero)) .
 
 theorem exists-fact-for-one : ∃ n Fact(n, suc(zero)) .
 
+% CAN'T  I guess it's just too many steps and too much memory.
 % theorem exists-fact-for-two : ∃ n Fact(suc(suc(n)), suc(suc(zero))) .
+
+theorem exists-sqr-rt-of-one: ∃ n Times(n, n, suc(zero)) .
+
+theorem exist-divisors-of-two : ∃ n m Times(n, m, suc(suc(zero))) .
+
+
+% theorem exists-divisor-of-four: ∃ n Times(n, suc(suc(zero)), suc(suc(suc(suc(zero))))) .
+
+% theorem exists-sqr-rt-of-four : ∃ n Times(n, n, suc(suc(suc(suc(zero))))) .
 
 
 % theorem fact-one-of : One(suc(zero))

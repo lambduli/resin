@@ -30,7 +30,7 @@ $digit                = [0-9]
 
 @upperident           = $upper [$lower $upper \- \_ $digit \']*
 
-@number               = [$upper]+
+@number               = [$digit]+
 
 $space                = [\ \t\f\v\n]
 
@@ -40,6 +40,8 @@ resin :-
 $space+                 ;
 
 "%".*\n                 ;
+
+"ᶜ"                     { \_ -> token Token.Constant'Before }
 
 "("                     { \_ -> token Token.Paren'Open }
 ")"                     { \_ -> token Token.Paren'Close }

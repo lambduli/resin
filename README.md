@@ -135,9 +135,11 @@ The second book's chapters 7 - 9 contain a lot of information. The whole book is
 ## TODO
 
 - [x] Lexer
+  - [x] `ᶜ` is a special "constant" toke
 - [ ] Parser
   - [ ] fix the S/R conflicts
   - [ ] fix the R/R conflicts
+  - [x] LOWER and UPPER followed by `ᶜ` is a constant
   - [x] make sure that the precedences work
 - [x] Printing
   - [x] only put parens around if necessary
@@ -154,4 +156,4 @@ The second book's chapters 7 - 9 contain a lot of information. The whole book is
   - [x] the theorem prover mode
     - [x] normal mode
     - [x] verbose mode
-- [ ] Support for existential queries (should give constructive answers)
+- [x] Support for existential queries (should give constructive answers)

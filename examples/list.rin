@@ -1,2 +1,29 @@
-constants: Nil, 1, 2, 3, 4, 5 .
+constants: Nil, Cons, 1, 2, 3, 4, 5 .
 
+
+axioms: ∀ head list Head(Cons(head, list), head)
+      , ∀ head Last(Cons(head, Nil), head)
+      , ∀ head list last Last(list, last) ==> Last(Cons(head, list), last)
+      .
+
+% ∀ h Last(Cons(h, Nilᶜ), h)
+% ∀ h l t Last(l, t) ==> Last(Cons(h, l), t)
+
+theorem head-of-list-is-1 : Head(Cons(1, Cons(2, Cons(3, Nil))), 1) .
+
+theorem last-of-list-is-3 : Last(Cons(1, Cons(2, Cons(3, Nil))), 3) .
+
+
+theorem exists-last-of-small-list : ∃ x Last(Cons(1, Nil), x) .
+
+theorem exists-last-of-small-ish-list : ∃ x Last(Cons(1, Cons(2, Nil)), x) .
+
+theorem exists-last-of-big-enough-list: ∃ x Last(Cons(1, Cons(2, Cons(3, Nil))), x) .
+
+theorem exists-last-of-big-list : ∃ x Last(Cons(1, Cons(2, Cons(3, Cons (4, Nil)))), x) .
+
+theorem exists-last-of-large-list : ∃ x Last(Cons(1, Cons(2, Cons(3, Cons (4, Cons(5, Nil))))), x) .
+
+
+% can't prove the following
+% theorem last-of-list: Last(Cons(1, Cons(2, Cons(3, Nil))), 4) .

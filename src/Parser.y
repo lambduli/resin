@@ -36,6 +36,8 @@ import Syntax qualified as S
 
   NUMBER      { Token.Number $$ }
 
+  C           { Token.Constant'Before }
+
   ','         { Token.Comma }
   '.'         { Token.Period }
   'theorem'   { Token.Theorem }
@@ -205,6 +207,7 @@ Term        ::  { Term }
                                                   else  if is'bound
                                                         then return (Var $1)
                                                         else throwError ("Parsing Error: Unbound variable `" ++ $1 ++ "' on line " ++ show l'no ++ " column " ++ show col'no ++ ".", col'no) } }
+            |   LOWER C                     { Fn $1 [] }
             |   UPPER                       {%  do
                                                 { consts <- gets constants
                                                 -- ; binders <- gets scope
@@ -217,6 +220,7 @@ Term        ::  { Term }
                                                 ; if $1 `elem` consts
                                                   then return (Fn $1 [])
                                                   else throwError ("Parsing Error: Unknown constant `" ++ $1 ++ "' on line " ++ show l'no ++ " column " ++ show col'no ++ ".", col'no) } }
+            |   UPPER C                     { Fn $1 [] }
             |   NUMBER                      {%  do
                                                 { consts <- gets constants
                                                 -- ; binders <- gets scope
@@ -229,7 +233,18 @@ Term        ::  { Term }
                                                 ; if $1 `elem` consts
                                                   then return (Fn $1 [])
                                                   else throwError ("Parsing Error: Unknown numeric constant `" ++ $1 ++ "' on line " ++ show l'no ++ " column " ++ show col'no ++ ".", col'no) } }
+            |   NUMBER C                    { Fn $1 [] }
             |   LOWER TermArgsM             { Fn $1 $2 }
+            |   UPPER TermArgsM             { Fn $1 $2 }
+                                            -- {%  do
+                                            --     { consts <- gets constants
+                                            --     ; col'now <- gets (ai'col'no . lexer'input)
+                                            --     ; l'no <- gets (ai'line'no . lexer'input)
+                                            --     ; let col'no = col'now - List.length $1
+                                            --     ; if $1 `elem` consts
+                                            --       then return (Fn $1 $2)
+                                            --       else throwError ("Parsing Error: Unknown constant `" ++ $1 ++ "' on line " ++ show l'no ++ " column " ++ show col'no ++ ".", col'no) } }
+            |   '(' Term ')'                { $2 }
 
 
 {

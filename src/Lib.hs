@@ -12,6 +12,9 @@ import Syntax ( Rel(..), Term(..), Formula(Atom, Not, And, Or, Impl, Eq, Forall,
 import Syntax qualified as S
 
 
+import Debug.Trace ( trace )
+
+
 over'atoms :: (Rel -> b -> b) -> Formula -> b -> b
 over'atoms f (Atom rel) b = f rel b
 over'atoms f (Not p) b = over'atoms f p b
@@ -80,14 +83,14 @@ distrib s1 s2 = Set.map (uncurry Set.union) (Set.cartesianProduct s1 s2)
 
 
 {-  Just a small test.  -}
-test1 :: Bool
-test1 = distrib (Set.fromList [Set.fromList ["P"], Set.fromList ["Q", "R"]])
-                (Set.fromList [Set.fromList ["¬P"], Set.fromList ["¬R"]])
-        ==
-        Set.fromList  [ Set.fromList ["P", "¬P"]
-                      , Set.fromList ["P", "¬R"]
-                      , Set.fromList ["Q", "R", "¬P"]
-                      , Set.fromList ["Q", "R", "¬R"] ]
+-- test1 :: Bool
+-- test1 = distrib (Set.fromList [Set.fromList ["P"], Set.fromList ["Q", "R"]])
+--                 (Set.fromList [Set.fromList ["¬P"], Set.fromList ["¬R"]])
+--         ==
+--         Set.fromList  [ Set.fromList ["P", "¬P"]
+--                       , Set.fromList ["P", "¬R"]
+--                       , Set.fromList ["Q", "R", "¬P"]
+--                       , Set.fromList ["Q", "R", "¬R"] ]
 
 
 pure'dnf :: Formula -> [[Formula]]
@@ -525,32 +528,133 @@ replace cl (c : cls)
 
 incorporate :: [Formula] -> [Formula] -> [[Formula]] -> [[Formula]]
 incorporate gcl cl unused
-  = if trivial cl|| List.any (\ c -> subsumes'clause c cl) (gcl : unused)
+  = if trivial cl || List.any (\ c -> subsumes'clause c cl) (gcl : unused)
     then unused
     else replace cl unused
 
 
+
+
+-- replace' :: [Formula] -> Set.Set [Formula] -> Set.Set [Formula]
+-- replace' cl clauses | Set.null clauses = Set.singleton cl
+-- replace' cl clauses
+--   = let c   = Set.elemAt 0 clauses
+--         cls = Set.deleteAt 0 clauses
+--     in  if subsumes'clause cl c
+--         then cl `Set.insert` cls
+--         else c `Set.insert` replace' cl cls
+
+
+-- incorporate' :: [Formula] -> [Formula] -> Set.Set [Formula] -> Set.Set [Formula]
+-- incorporate' gcl cl unused
+--   = if trivial cl || List.any (\ c -> subsumes'clause c cl) (gcl `Set.insert` unused)
+--     then unused
+--     else replace' cl unused
+
+
+-- res'loop' :: (Set.Set [Formula], Set.Set [Formula]) -> Bool
+-- res'loop' (used, unused)
+--   | Set.null unused = False
+--   | otherwise = let cl = Set.elemAt 0 unused
+--                     cls = Set.deleteAt 0 unused
+
+--                     used' = cl `Set.insert` used
+--                     resolvents = Set.map (resolve'clauses cl) used'
+--                     news = Set.foldl' Set.union Set.empty resolvents
+--                     news' = trace ("#used= " ++ show (length used) ++ " | size of cl= " ++ show (length cl) ++ "\nsize of unused= " ++ show (Set.size unused) {- ++ "\ncl= " ++ show cl -}) news
+--                     fn acc new = incorporate' cl new acc
+
+--                     new'unused = Set.foldl' fn cls news'
+--                     -- new'unused = cls `Set.union` news'
+
+--                     how'many'actually = (Set.size news') - ((Set.size new'unused) - (Set.size cls))
+--                     new'un' = trace ("news count= " ++ show (Set.size news') ++ " | cls count= " ++ show (Set.size cls) ++ " | new'un' count= " ++ show (Set.size new'unused) ++ "\n || how many actually NOT ADDED= " ++ show (how'many'actually) ) new'unused
+--                 in  ([] `Set.member` news') || res'loop' (used', new'un')
+
+
 res'loop :: ([[Formula]], [[Formula]]) -> Bool
 res'loop (_, []) = False -- the book raises an error, I don't see why
-res'loop (used, (cl : cls))
+res'loop (used, unused@(cl : cls))
   = let used' = Set.toList $! cl `Set.insert` Set.fromList used
         resolvents = map (resolve'clauses cl) used'
         news = foldl' Set.union Set.empty resolvents
-        -- news' = trace ("news= " ++ show news) news
         fn a b = incorporate cl b a
-    in  ([] `List.elem` news) || res'loop (used', List.foldl' fn cls (Set.toList news))
-    -- in  ([] `List.elem` news) || res'loop (used', cls ++ Set.toList news)
+
+        new'unused = List.foldl' fn cls (Set.toList news)
+    -- in  ([] `List.elem` news) || res'loop (used', new'unused)
+    in  ([] `List.elem` news) || res'loop (used', cls ++ Set.toList news)
+
+
+res'loop'' :: ([[Formula]], [[Formula]]) -> Maybe [Formula]
+res'loop'' (_, []) = Nothing
+res'loop'' (used, unused@(cl : cls))
+  = let used' = Set.toList $! cl `Set.insert` Set.fromList used
+        resolvents = map (resolve'clauses cl) used'
+        news = Set.toList $! foldl' Set.union Set.empty resolvents
+        fn a b = incorporate cl b a
+
+        -- new'unused = List.foldl' fn cls (Set.toList news)
+    -- in  ([] `List.elem` news) || res'loop'' (used', new'unused)
+    in  case contains'contradiction news of
+          Nothing -> res'loop'' (used', cls ++ news)
+          Just answers -> Just answers
+
+
+contains'contradiction :: [[Formula]] -> Maybe [Formula]
+contains'contradiction = List.find (\ formulae -> List.all is'answer formulae && all'unique (List.map (\ (Atom (Rel "_Answer_" [_, Fn x _])) -> x) formulae))
+
+
+all'unique :: [String] -> Bool
+all'unique names = List.length names == Set.size (Set.fromList names)
+
+
+is'answer :: Formula -> Bool
+is'answer (Atom (Rel "_Answer_" [_, _])) = True
+is'answer _ = False
 
 
 pure'resolution' :: Formula -> Bool
+-- pure'resolution' fm = res'loop' (Set.empty, Set.fromList . simp'cnf . specialize . skolemise $! fm)
 pure'resolution' fm = res'loop ([], simp'cnf . specialize . skolemise $! fm)
 
 
-resolution :: [Formula] -> Formula -> Bool
+pure'resolution'' :: Formula -> Maybe [Formula]
+pure'resolution'' fm = res'loop'' ([], simp'cnf . specialize . skolemise $! fm)
+
+
+resolution'' :: [Formula] -> Formula -> Maybe [(String, Term)]
+resolution'' assumptions fm@(Exists x p)
+  = -- find all the existentially quantified variables at the top level
+    let all'exs = all'existentials fm
+        neg'fm  = nnf (negate fm)
+        -- I can look at what names the algorithm choses for all those (now) foralls
+        -- I create all those Answer(..) literals with those same names and make one large disjunction
+        (all'unis, p)  = all'universals neg'fm
+        answers   = map (\ (u, e) -> Atom (Rel "_Answer_" [Var u, Fn e []])) $! zip all'unis all'exs
+        disjunction = List.foldr Forall (list'disj (p : answers)) all'unis
+        -- disjunction = list'disj (neg'fm : answers)
+        full'fm   = list'conj (disjunction : assumptions)
+    in  case pure'resolution'' full'fm of
+          Nothing -> Nothing
+          Just formulae ->
+            Just $! map (\ (Atom (Rel "_Answer_" [term, Fn name []])) -> (name, term)) formulae
+
+
+resolution :: [Formula] -> Formula -> Bool  
 resolution assumptions conclusion
   = let neg'conclusion = negate conclusion
         fm = list'conj (neg'conclusion : assumptions)
     in  pure'resolution' fm
+
+
+all'existentials :: Formula -> [String]
+all'existentials (Exists x p) = x : all'existentials p
+all'existentials _ = []
+
+
+all'universals :: Formula -> ([String], Formula)
+all'universals (Forall x p) = let (exis, q) = all'universals p in (x : exis, q)
+all'universals p = ([], p)
 
 
 neg'norm'form :: Formula -> Formula
