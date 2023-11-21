@@ -36,6 +36,8 @@ import Syntax qualified as S
 
   NUMBER      { Token.Number $$ }
 
+  C           { Token.Constant'Before }
+
   ','         { Token.Comma }
   '.'         { Token.Period }
   'theorem'   { Token.Theorem }
@@ -205,6 +207,7 @@ Term        ::  { Term }
                                                   else  if is'bound
                                                         then return (Var $1)
                                                         else throwError ("Parsing Error: Unbound variable `" ++ $1 ++ "' on line " ++ show l'no ++ " column " ++ show col'no ++ ".", col'no) } }
+            |   LOWER C                     { Fn $1 [] }
             |   UPPER                       {%  do
                                                 { consts <- gets constants
                                                 -- ; binders <- gets scope
@@ -217,6 +220,7 @@ Term        ::  { Term }
                                                 ; if $1 `elem` consts
                                                   then return (Fn $1 [])
                                                   else throwError ("Parsing Error: Unknown constant `" ++ $1 ++ "' on line " ++ show l'no ++ " column " ++ show col'no ++ ".", col'no) } }
+            |   UPPER C                     { Fn $1 [] }
             |   NUMBER                      {%  do
                                                 { consts <- gets constants
                                                 -- ; binders <- gets scope

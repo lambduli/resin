@@ -41,6 +41,8 @@ $space+                 ;
 
 "%".*\n                 ;
 
+"ᶜ"                     { \_ -> token Token.Constant'Before }
+
 "("                     { \_ -> token Token.Paren'Open }
 ")"                     { \_ -> token Token.Paren'Close }
 "["                     { \_ -> token Token.Box'Open }

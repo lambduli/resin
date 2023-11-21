@@ -585,16 +585,76 @@ res'loop (used, unused@(cl : cls))
     in  ([] `List.elem` news) || res'loop (used', cls ++ Set.toList news)
 
 
+res'loop'' :: ([[Formula]], [[Formula]]) -> Maybe [Formula]
+res'loop'' (_, []) = Nothing
+res'loop'' (used, unused@(cl : cls))
+  = let used' = Set.toList $! cl `Set.insert` Set.fromList used
+        resolvents = map (resolve'clauses cl) used'
+        news = Set.toList $! foldl' Set.union Set.empty resolvents
+        fn a b = incorporate cl b a
+
+        -- new'unused = List.foldl' fn cls (Set.toList news)
+    -- in  ([] `List.elem` news) || res'loop'' (used', new'unused)
+    in  case contains'contradiction news of
+          Nothing -> res'loop'' (used', cls ++ news)
+          Just answers -> Just answers
+
+
+contains'contradiction :: [[Formula]] -> Maybe [Formula]
+contains'contradiction = List.find (\ formulae -> List.all is'answer formulae && all'unique (List.map (\ (Atom (Rel "_Answer_" [_, Fn x _])) -> x) formulae))
+
+
+all'unique :: [String] -> Bool
+all'unique names = List.length names == Set.size (Set.fromList names)
+
+
+is'answer :: Formula -> Bool
+is'answer (Atom (Rel "_Answer_" [_, _])) = True
+is'answer _ = False
+
+
 pure'resolution' :: Formula -> Bool
 -- pure'resolution' fm = res'loop' (Set.empty, Set.fromList . simp'cnf . specialize . skolemise $! fm)
 pure'resolution' fm = res'loop ([], simp'cnf . specialize . skolemise $! fm)
 
 
-resolution :: [Formula] -> Formula -> Bool
+pure'resolution'' :: Formula -> Maybe [Formula]
+pure'resolution'' fm = res'loop'' ([], simp'cnf . specialize . skolemise $! fm)
+
+
+resolution'' :: [Formula] -> Formula -> Maybe [(String, Term)]
+resolution'' assumptions fm@(Exists x p)
+  = -- find all the existentially quantified variables at the top level
+    let all'exs = all'existentials fm
+        neg'fm  = nnf (negate fm)
+        -- I can look at what names the algorithm choses for all those (now) foralls
+        -- I create all those Answer(..) literals with those same names and make one large disjunction
+        (all'unis, p)  = all'universals neg'fm
+        answers   = map (\ (u, e) -> Atom (Rel "_Answer_" [Var u, Fn e []])) $! zip all'unis all'exs
+        disjunction = List.foldr Forall (list'disj (p : answers)) all'unis
+        -- disjunction = list'disj (neg'fm : answers)
+        full'fm   = list'conj (disjunction : assumptions)
+    in  case pure'resolution'' full'fm of
+          Nothing -> Nothing
+          Just formulae ->
+            Just $! map (\ (Atom (Rel "_Answer_" [term, Fn name []])) -> (name, term)) formulae
+
+
+resolution :: [Formula] -> Formula -> Bool  
 resolution assumptions conclusion
   = let neg'conclusion = negate conclusion
         fm = list'conj (neg'conclusion : assumptions)
     in  pure'resolution' fm
+
+
+all'existentials :: Formula -> [String]
+all'existentials (Exists x p) = x : all'existentials p
+all'existentials _ = []
+
+
+all'universals :: Formula -> ([String], Formula)
+all'universals (Forall x p) = let (exis, q) = all'universals p in (x : exis, q)
+all'universals p = ([], p)
 
 
 neg'norm'form :: Formula -> Formula
