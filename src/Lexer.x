@@ -30,7 +30,7 @@ $digit                = [0-9]
 
 @upperident           = $upper [$lower $upper \- \_ $digit \']*
 
-@number               = [$upper]+
+@number               = [$digit]+
 
 $space                = [\ \t\f\v\n]
 

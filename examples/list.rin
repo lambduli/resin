@@ -1,2 +1,17 @@
-constants: Nil, 1, 2, 3, 4, 5 .
+constants: Nil, Cons, 1, 2, 3, 4, 5 .
 
+
+axioms: ∀ h l Head(Cons(h, l), h)
+      , ∀ h Last(Cons(h, Nil), h)
+      , ∀ h l last Last(l, last) ==> Last(Cons(h, l), last)
+      .
+
+
+theorem head-of-list: Head(Cons(1, Cons(2, Cons(3, Nil))), 1) .
+
+
+theorem last-of-list: Last(Cons(1, Cons(2, Cons(3, Nil))), 3) .
+
+
+% can't prove the following
+% theorem last-of-list: Last(Cons(1, Cons(2, Cons(3, Nil))), 4) .
