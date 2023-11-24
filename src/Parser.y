@@ -182,6 +182,8 @@ Relation    ::  { Rel }
 
 TermArgsM   ::  { [Term] }
             :   '(' TArgsSep ')'            { $2 }
+            |   '[' TArgsSep ']'            { $2 }
+            |   '{' TArgsSep '}'            { $2 }
             |   {- empty  -}                { [] }
 
 
