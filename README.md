@@ -148,6 +148,7 @@ The second book's chapters 7 - 9 contain a lot of information. The whole book is
   - [x] `:entails` command that check whether the current list of assumptions entails a given formula
   - [x] `:consistent` command check that the current set of assumptions does not contain a contradiction
   - [x] `:clear` comand clears the assumptions (sets it to just one `⊤`)
+  - [ ] `:load` command to load axioms and constants from a file (will require storing the parser-state and reusing it)
   - [x] the command over formula mode
     - [x] `:skolemize` command
     - [x] `:pnf` command
