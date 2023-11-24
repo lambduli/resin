@@ -5,7 +5,7 @@ axioms: ∀ n Plus(zero, n, n)
       , ∀ n m r Plus(n, m, r) ==> Plus(suc(n), m, suc(r))
       % , Plus(zero, zero, zero) % redundant
       % , [∀ n m r Plus(n, m, r) ==> Plus(suc(n), m, suc(r))] ==> ∀ o ∃ m n Plus(m, n, o) % redundant
-      , ∀b ([∀ k (∃ c Plus(k, b, c) ==> ∃ c Plus(suc(k), b, c))] ==> ∀ n ∃ c Plus(n, b, c))
+      , ∀ b ([∀ k (∃ c Plus(k, b, c) ==> ∃ c Plus(suc(k), b, c))] ==> ∀ n ∃ c Plus(n, b, c))
       , ∀ n Times(zero, n, zero)
       , ∀ n m r a [Times(n, m, r) ∧ Plus(r, m, a) ==> Times(suc(n), m, a)]
       , Fact(zero, suc(zero))
