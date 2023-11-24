@@ -1,18 +1,54 @@
-constants: Nil, Cons, 1, 2, 3, 4, 5 .
+constants: Nil, Cons, zero, 0, 1, 2, 3, 4, 5 .
 
 
-axioms: ∀ head list Head(Cons(head, list), head)
+axioms: ∀ head tail Head(Cons(head, tail), head)
+
       , ∀ head Last(Cons(head, Nil), head)
-      , ∀ head list last Last(list, last) ==> Last(Cons(head, list), last)
+      , ∀ head tail last Last(tail, last) ==> Last(Cons(head, tail), last)
+
+      , ∀ n Nat(n) ==> Nat(suc(n))
+      , Nat(zero)
+
+      , ∀ x Less(zero, suc(x))
+      , ∀ x y Less(x, y) ==> Less(suc(x), suc(y))
+      
+      , ∀ x y Less(x, y) <==> Less(suc(x), suc(y))        % if and only if
+      , ∀ x ¬Less(x, zero)                                % a NOT base case
+      
+      % , ¬Less(suc(suc(suc(suc(suc(zero))))), suc(zero))   % modus tolens
+      % , ¬Less(suc(suc(suc(suc(zero)))), suc(suc(zero)))   % modus tolens
+      
+      % , ¬Less(suc(suc(suc(suc(zero)))), zero)             % modus ponens for Sorted (for ¬Less it's trivialy making it true)
+      % , ¬Less(suc(suc(suc(zero))), suc(zero))             % modus ponens for Sorted (for ¬Less it's trivialy making it true)
+      
+      % , ∀ x ¬Less(x, zero)                                % explicit notion of ¬Less as in "Database Semantics"
+      % , ∀ x y ¬Less(x, y) ==> ¬Less(suc(x), suc(y))       %                       =||=
+
+      , Sorted(Nil)
+      , ∀ x Sorted(Cons(x, Nil))
+      , ∀ head head' Less(head, head') ==> Sorted(Cons(head, Cons(head', Nil)))
+      , ∀ head head' ¬Less(head, head') ==> ¬Sorted(Cons(head, Cons(head', Nil)))
+      , ∀ head head' tail Less(head, head') ∧ Sorted(Cons(head', tail)) ==> Sorted(Cons(head, Cons(head', tail)))
       .
 
 % ∀ h Last(Cons(h, Nilᶜ), h)
 % ∀ h l t Last(l, t) ==> Last(Cons(h, l), t)
 
+
+
+
+% LESS
+theorem four-is-not-less-than-zero: ¬Less(suc(suc(suc(suc(zero)))), zero) .
+
+theorem three-is-not-less-than-one: ¬Less(suc(suc(suc(zero))), suc(zero)) .
+
+
+% HEAD
 theorem head-of-list-is-1 : Head(Cons(1, Cons(2, Cons(3, Nil))), 1) .
 
-theorem last-of-list-is-3 : Last(Cons(1, Cons(2, Cons(3, Nil))), 3) .
 
+% LAST
+theorem last-of-list-is-3 : Last(Cons(1, Cons(2, Cons(3, Nil))), 3) .
 
 theorem exists-last-of-small-list : ∃ x Last(Cons(1, Nil), x) .
 
@@ -24,6 +60,18 @@ theorem exists-last-of-big-list : ∃ x Last(Cons(1, Cons(2, Cons(3, Cons (4, Ni
 
 theorem exists-last-of-large-list : ∃ x Last(Cons(1, Cons(2, Cons(3, Cons (4, Cons(5, Nil))))), x) .
 
-
 % can't prove the following
 % theorem last-of-list: Last(Cons(1, Cons(2, Cons(3, Nil))), 4) .
+
+% SORTED
+theorem sorted-nil: Sorted(Nil) .
+
+theorem sorted-singleton: Sorted(Cons(suc(zero), Nil)) .
+
+theorem sorted-any-singleton: ∀ x Sorted(Cons(suc(x), Nil)) .
+
+theorem sorted-small-list : Sorted(Cons(zero, Cons{suc(suc(zero)), Cons[suc(suc(suc(suc(zero)))), Nil]})) .
+
+theorem not-sorted-small-list : ¬Sorted(Cons[suc(suc(suc(suc(zero)))), Cons(zero, Nil)]) .
+
+theorem not-sorted-smallish-list : ¬Sorted(Cons[suc(suc(suc(zero))), Cons(suc(zero), Nil)]) .

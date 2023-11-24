@@ -4,7 +4,9 @@ constants: zero, blah .
 
 % and axioms
 axioms: ∀ n Nat(n) ==> Nat(suc(n))
-      , Nat(zero) .
+      , Nat(zero)
+      , ∀ x Less(zero, suc(x))
+      , ∀ x y Less(x, y) ==> Less(suc(x), suc(y)) .
 
 
 % this says that one is a natural number
@@ -46,3 +48,10 @@ theorem zero-is-nat : Nat(zero) .
 % There's `suc(zero)` and `suc(suc(zero))` and `suc(suc(suc(zero)))`
 % and so on.
 % The resolution seems to keep generating those without a chance for stopping.
+
+
+
+% LESS
+theorem zero-is-less-than-two : Less(zero, suc(suc(zero))) .
+
+theorem one-is-less-than-three: Less(suc(zero), suc(suc(suc(zero)))) .
