@@ -30,7 +30,7 @@ data Formula  = True                    -- ⊤
 
 instance Show Term where
   show (Var n) = n
-  show (Fn n []) = n ++ "ᶜ"
+  show (Fn n []) = n
   show (Fn n terms) = n ++ "(" ++ intercalate ", " (map show terms) ++ ")"
 
 
@@ -63,6 +63,21 @@ instance Show Formula where
   
   show (Or p q) = show p ++ " ∨ " ++ show q
   -- show (Or p q) = "[" ++ show p ++ "] ∨ [" ++ show q ++ "]"   -- just leaving this for future debugging
+
+  show (Impl p q)
+    --  F ==> (G ==> H)
+    | (Impl _ _) <- q, (Not _) <- p = show p ++ " ==> " ++ show q
+    | (Impl _ _) <- q, not (is'compound p) = show p ++ " ==> " ++ show q
+
+    | (Not _) <- p, (Not _) <- q = show p ++ " ==> " ++ show q
+    | (Not _) <- p, not (is'compound q) = show p ++ " ==> " ++ show q
+    | (Not _) <- p = show p ++ " ==> " ++ show q
+    | (Not _) <- q, not (is'compound p) = show p ++ " ==> " ++ show q
+    | (Not _) <- q = "(" ++ show p ++ ") ==> " ++ show q
+
+    | not (is'compound p), not (is'compound q) = show p ++ " ==> " ++ show q
+    | not (is'compound p) = show p ++ " ==> (" ++ show q ++ ")"
+    | not (is'compound q) = "(" ++ show p ++ ") ==> " ++ show q
 
   -- show (Impl p q) = show p ++ " ==> " ++ show q
   show (Impl p q) = "(" ++ show p ++ ") ==> (" ++ show q ++ ")"
