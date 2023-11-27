@@ -12,9 +12,6 @@ import Syntax ( Rel(..), Term(..), Formula(Atom, Not, And, Or, Impl, Eq, Forall,
 import Syntax qualified as S
 
 
-import Debug.Trace ( trace )
-
-
 over'atoms :: (Rel -> b -> b) -> Formula -> b -> b
 over'atoms f (Atom rel) b = f rel b
 over'atoms f (Not p) b = over'atoms f p b
@@ -80,17 +77,6 @@ list'disj (f : fs) = foldl' Or f fs
 
 distrib :: Ord a => Set.Set (Set.Set a) -> Set.Set (Set.Set a) -> Set.Set (Set.Set a)
 distrib s1 s2 = Set.map (uncurry Set.union) (Set.cartesianProduct s1 s2)
-
-
-{-  Just a small test.  -}
--- test1 :: Bool
--- test1 = distrib (Set.fromList [Set.fromList ["P"], Set.fromList ["Q", "R"]])
---                 (Set.fromList [Set.fromList ["¬P"], Set.fromList ["¬R"]])
---         ==
---         Set.fromList  [ Set.fromList ["P", "¬P"]
---                       , Set.fromList ["P", "¬R"]
---                       , Set.fromList ["Q", "R", "¬P"]
---                       , Set.fromList ["Q", "R", "¬R"] ]
 
 
 pure'dnf :: Formula -> [[Formula]]
@@ -319,7 +305,7 @@ functions fm = atom'union (\ (Rel _ terms) -> foldl' (\ s t -> s `Set.union` fun
 skolem :: Formula -> Set.Set String -> (Formula, Set.Set String)
 skolem fm@(Exists y p) fns
   = let xs  = Set.toList $! fv fm
-        f   = variant y {- (if List.null xs then "c_" ++ y else "f_" ++ y) -} fns
+        f   = variant y fns
         f'  = if List.null xs then 'ᶜ' : f else 'ᶠ' : f
         fx  = Fn f' (map Var xs)
     in  skolem (subst (Map.singleton y fx) p) (f `Set.insert` fns)
