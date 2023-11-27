@@ -9,7 +9,18 @@ The implementation is based on a *given clause algorithm* for *resolution*.
 For more information about it, see the *Resources* section.
 
 
+The [book](https://www.cl.cam.ac.uk/~jrh13/atp/) in the *Resources*
+describes some optimizations as well as specific forms of resolution.
+This implementation does not (yet) implement those specific forms or resolution.
+It does, however, contain an implementation of the optimization the book mentions.
+The subsumption, to be more precise. As it turns how, however,
+that was making the implementation really slow, unbearably slow.
+For that reason I decided to not use it for the time being.
+
+
 ## Structure of the Files
+
+> For more examples, look into the `examples` directory.
 
 The Resin files are meant to have a `.rin` extension.
 They might look something like the following snippet:
@@ -59,15 +70,31 @@ You don't have to use those, the following shows the groups of symbols with the 
 
 ### Identifiers
 
-Resin differentiates between two types of identifiers—the ones used mainly for *object variables* and the ones used for *propositional variables*.
+Resin differentiates between two types of identifiers—the ones used mainly for *object variables* and the ones used for *propositional variables* and for functions.
 
 > All variables can contain a few special symbols. However, those special symbols may only come after a letter. The special symbols are: `-`, `_`, `'`, and *any digit*.
 
-When we write `∀ x P(x)`, the `x` is an *object variable* and the `P` is a *propositional variable*.
+When we write `∀ x P(f(x))`, the `x` is an *object variable*, the `P` is a *propositional variable* and the `f` is a function constant.
+
 The object variables need to begin with lower-case letter and the propositional variables (names for relations) need to begin with upper-case letter.
 
-*Functions* share the lexical requirements with object variables—they start with lower-case letter.
-When it comes to *constants* the situation is little bit more relaxed—a constant defined beforehand (in the `constants` section) can start with both, lower-case and upper-case letter. In such a case, however, constant must not be written lexically like a nullary function!
+Usually, *functions* share the lexical requirements with object variables—they start with lower-case letter.
+
+When it comes to *constants* the situation is little bit more relaxed—a function or a constant defined beforehand (in the `constants` section) can start with both, lower-case and upper-case letter. In such a case, however, constant must not be written lexically like a nullary function!
+
+There is one more way to modify this behaviour—to make writing function identifiers and constants starting with both lower-case and capital-case letters possible and also easier.
+There is a special character `ᶜ` that can be written at the end of an identifier that starts with any letter. This makes that identifier be recognized as a constant or a function, depending on the situation, even without it being defined beforehand.
+
+Example: `∃ x Prop(x, Sucᶜ(Zeroᶜ))`
+
+This can be especially useful in the REPL where you can't write a `constants` section. It also makes upper-case functions possible at all.
+
+
+### Numbers
+
+To make some propositions look nicer *Resin* also supports numbers as constant symbols.
+In files, they can be defined in the `constants` section, like this: `constants: 1, 2, 3 ...`.
+In the REPL one can also use the `ᶜ` trick like so: `0ᶜ`.
 
 
 ### Quantifiers
@@ -109,10 +136,6 @@ There are also a few commands for a simple transformation on formulae.
 10) To put a propositional formula `ƒ` into a *Conjunction Normal Form*, type `:cnf <ƒ>`. However, be aware that this will only work when the formula does not contain existential quantifiers. Those require skolemization and that leads to only *equisatisfiable* not *equivalent* formulae. The tool will reject formulae with `∃` with `:cnf` command.
 
 
-______
-
-For more examples, look into the `examples` directory.
-
 ## Q&A
 
 > Q: Why does this exist?
@@ -138,7 +161,7 @@ The second book's chapters 7 - 9 contain a lot of information. The whole book is
   - [x] `ᶜ` is a special "constant" toke
 - [ ] Parser
   - [ ] fix the S/R conflicts
-  - [ ] fix the R/R conflicts
+  - [x] fix the R/R conflicts
   - [x] LOWER and UPPER followed by `ᶜ` is a constant
   - [x] make sure that the precedences work
 - [x] Printing
