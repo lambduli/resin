@@ -13,6 +13,8 @@ import Syntax qualified as S
 
 
 over'atoms :: (Rel -> b -> b) -> Formula -> b -> b
+over'atoms _ S.True b = b
+over'atoms _ S.False b = b
 over'atoms f (Atom rel) b = f rel b
 over'atoms f (Not p) b = over'atoms f p b
 over'atoms f (And p q) b = over'atoms f p (over'atoms f q b)
