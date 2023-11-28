@@ -63,9 +63,8 @@ library
 
     -- Modules exported by the library.
     exposed-modules:
-        Formula
+        Given'Clause
         Lexer
-        Lib
         Parser
         Syntax
         Token

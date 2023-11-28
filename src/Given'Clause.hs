@@ -1,4 +1,4 @@
-module Lib where
+module Given'Clause where
 
 import Prelude hiding ( negate )
 import Data.Maybe qualified as Maybe
@@ -10,6 +10,11 @@ import Data.Map.Strict qualified as Map
 
 import Syntax ( Rel(..), Term(..), Formula(Atom, Not, And, Or, Impl, Eq, Forall, Exists) )
 import Syntax qualified as S
+
+
+type Literal = Formula
+
+type Clause = [Literal]
 
 
 over'atoms :: (Rel -> b -> b) -> Formula -> b -> b
@@ -420,38 +425,38 @@ mgu (a : b : rest) env
 mgu _ env = Just $! solve env
 
 
-unifiable :: Formula -> Formula -> Bool
+unifiable :: Literal -> Literal -> Bool
 unifiable p q = Maybe.isJust $! unify'literals Map.empty (p, q)
 
 
 rename :: String -> [Formula] -> [Formula]
 rename prefix clauses
-  = let fvs = Set.toList $! fv (list'disj clauses)
+  = let fvs = Set.toList $! foldl' (\ s cl -> s `Set.union` fv cl) Set.empty clauses
         vvs = List.map (\ s -> Var $! prefix ++ s) fvs
     in  map (subst (Map.fromList $! zip fvs vvs)) clauses
 
 
-resolvents :: [Formula] -> [Formula] -> Formula -> Set.Set [Formula] -> Set.Set [Formula]
+resolvents :: Clause -> Clause -> Literal -> Set.Set Clause -> Set.Set Clause
 {-  p     is a particular Literal in cl1
     cl1   is some clause
     cl2   is some clause
-    acc   is a List of Clauses              -}
+    acc   is a Set of Clauses              -}
 resolvents cl1 cl2 p acc
   = let ps2 = Set.fromList $! filter (unifiable (negate p)) cl2
     {-  ps2   are all the literals in cl2 that would unify with ¬p    -}
     in  if List.null ps2
         then acc
-        else  let ps1 :: Set.Set Formula  -- a Clause
+        else  let ps1 :: Set.Set Literal  -- a Clause
                   ps1 = Set.fromList $! filter (\ q -> (q /= p) && p `unifiable` q) cl1
               {-  ps1   are all the literals in cl1 (excluding p) that could unify with p   -}
 
-                  all'subsets'of'ps1 :: Set.Set (Set.Set Formula)
+                  all'subsets'of'ps1 :: Set.Set (Set.Set Literal)
                   all'subsets'of'ps1 = (Set.map (Set.insert p) $! all'subsets ps1)
 
-                  all'non'empty'subsets'of'ps2 :: Set.Set (Set.Set Formula)
+                  all'non'empty'subsets'of'ps2 :: Set.Set (Set.Set Literal)
                   all'non'empty'subsets'of'ps2 = all'non'empty'subsets ps2
                   
-                  pairs :: [(Set.Set Formula, Set.Set Formula)]
+                  pairs :: [(Set.Set Literal, Set.Set Literal)]
                   pairs = Set.toList $! Set.cartesianProduct
                                           all'subsets'of'ps1
                                           all'non'empty'subsets'of'ps2
@@ -467,7 +472,7 @@ resolvents cl1 cl2 p acc
         all'non'empty'subsets = Set.filter (not . Set.null) . Set.powerSet
 
 
-resolve'clauses :: [Formula] -> [Formula] -> Set.Set [Formula]
+resolve'clauses :: Clause -> Clause -> Set.Set Clause
 resolve'clauses cls1 cls2
   = let cls1' = rename "x" cls1
         cls2' = rename "y" cls2
@@ -506,7 +511,7 @@ subsumes'clause cl1 cl2 = subsume Map.empty cl1
                                 Just env -> subsume env clt) cl2
 
 
-replace :: [Formula] -> [[Formula]] -> [[Formula]]
+replace :: Clause -> [Clause] -> [Clause]
 replace cl [] = [cl]
 replace cl (c : cls)
   = if subsumes'clause cl c
@@ -514,81 +519,38 @@ replace cl (c : cls)
     else c : replace cl cls
 
 
-incorporate :: [Formula] -> [Formula] -> [[Formula]] -> [[Formula]]
+incorporate :: Clause -> Clause -> [Clause] -> [Clause]
 incorporate gcl cl unused
   = if trivial cl || List.any (\ c -> subsumes'clause c cl) (gcl : unused)
     then unused
     else replace cl unused
 
 
-
-
--- replace' :: [Formula] -> Set.Set [Formula] -> Set.Set [Formula]
--- replace' cl clauses | Set.null clauses = Set.singleton cl
--- replace' cl clauses
---   = let c   = Set.elemAt 0 clauses
---         cls = Set.deleteAt 0 clauses
---     in  if subsumes'clause cl c
---         then cl `Set.insert` cls
---         else c `Set.insert` replace' cl cls
-
-
--- incorporate' :: [Formula] -> [Formula] -> Set.Set [Formula] -> Set.Set [Formula]
--- incorporate' gcl cl unused
---   = if trivial cl || List.any (\ c -> subsumes'clause c cl) (gcl `Set.insert` unused)
---     then unused
---     else replace' cl unused
-
-
--- res'loop' :: (Set.Set [Formula], Set.Set [Formula]) -> Bool
--- res'loop' (used, unused)
---   | Set.null unused = False
---   | otherwise = let cl = Set.elemAt 0 unused
---                     cls = Set.deleteAt 0 unused
-
---                     used' = cl `Set.insert` used
---                     resolvents = Set.map (resolve'clauses cl) used'
---                     news = Set.foldl' Set.union Set.empty resolvents
---                     news' = trace ("#used= " ++ show (length used) ++ " | size of cl= " ++ show (length cl) ++ "\nsize of unused= " ++ show (Set.size unused) {- ++ "\ncl= " ++ show cl -}) news
---                     fn acc new = incorporate' cl new acc
-
---                     new'unused = Set.foldl' fn cls news'
---                     -- new'unused = cls `Set.union` news'
-
---                     how'many'actually = (Set.size news') - ((Set.size new'unused) - (Set.size cls))
---                     new'un' = trace ("news count= " ++ show (Set.size news') ++ " | cls count= " ++ show (Set.size cls) ++ " | new'un' count= " ++ show (Set.size new'unused) ++ "\n || how many actually NOT ADDED= " ++ show (how'many'actually) ) new'unused
---                 in  ([] `Set.member` news') || res'loop' (used', new'un')
-
-
-res'loop :: ([[Formula]], [[Formula]]) -> Bool
+res'loop :: ([Clause], [Clause]) -> Bool
 res'loop (_, []) = False -- the book raises an error, I don't see why
 res'loop (used, unused@(cl : cls))
   = let used' = Set.toList $! cl `Set.insert` Set.fromList used
         resolvents = map (resolve'clauses cl) used'
         news = foldl' Set.union Set.empty resolvents
-        fn a b = incorporate cl b a
-
-        new'unused = List.foldl' fn cls (Set.toList news)
+        
+        -- fn a b = incorporate cl b a
+        -- new'unused = List.foldl' fn cls (Set.toList news)
     -- in  ([] `List.elem` news) || res'loop (used', new'unused)
     in  ([] `List.elem` news) || res'loop (used', cls ++ Set.toList news)
 
 
-res'loop'' :: ([[Formula]], [[Formula]]) -> Maybe [Formula]
+res'loop'' :: ([Clause], [Clause]) -> Maybe [Formula]
 res'loop'' (_, []) = Nothing
 res'loop'' (used, unused@(cl : cls))
   = let used' = Set.toList $! cl `Set.insert` Set.fromList used
         resolvents = map (resolve'clauses cl) used'
         news = Set.toList $! foldl' Set.union Set.empty resolvents
-        fn a b = incorporate cl b a
-
-        -- new'unused = List.foldl' fn cls (Set.toList news)
-    -- in  ([] `List.elem` news) || res'loop'' (used', new'unused)
     in  case contains'contradiction news of
           Nothing -> res'loop'' (used', cls ++ news)
           Just answers -> Just answers
 
 
-contains'contradiction :: [[Formula]] -> Maybe [Formula]
+contains'contradiction :: [Clause] -> Maybe [Formula]
 contains'contradiction = List.find (\ formulae -> List.all is'answer formulae && all'unique (List.map (\ (Atom (Rel "_Answer_" [_, Fn x _])) -> x) formulae))
 
 
@@ -596,13 +558,12 @@ all'unique :: [String] -> Bool
 all'unique names = List.length names == Set.size (Set.fromList names)
 
 
-is'answer :: Formula -> Bool
+is'answer :: Literal -> Bool
 is'answer (Atom (Rel "_Answer_" [_, _])) = True
 is'answer _ = False
 
 
 pure'resolution' :: Formula -> Bool
--- pure'resolution' fm = res'loop' (Set.empty, Set.fromList . simp'cnf . specialize . skolemise $! fm)
 pure'resolution' fm = res'loop ([], simp'cnf . specialize . skolemise $! fm)
 
 
@@ -620,7 +581,6 @@ resolution'' assumptions fm@(Exists x p)
         (all'unis, p)  = all'universals neg'fm
         answers   = map (\ (u, e) -> Atom (Rel "_Answer_" [Var u, Fn e []])) $! zip all'unis all'exs
         disjunction = List.foldr Forall (list'disj (p : answers)) all'unis
-        -- disjunction = list'disj (neg'fm : answers)
         full'fm   = list'conj (disjunction : assumptions)
     in  case pure'resolution'' full'fm of
           Nothing -> Nothing
@@ -645,6 +605,7 @@ all'universals (Forall x p) = let (exis, q) = all'universals p in (x : exis, q)
 all'universals p = ([], p)
 
 
+{-  These are the functions corresponding to specific commands  -}
 neg'norm'form :: Formula -> Formula
 neg'norm'form = nnf . simplify
 
@@ -657,19 +618,18 @@ skol'norm'form :: Formula -> Formula
 skol'norm'form = skolemise
 
 
---  NOTE: I am skipping `pnf` there, I still think it should work, but it needs some testing.
 con'norm'form :: Formula -> Formula
-con'norm'form = specialize . prenex . a'skolemize -- roughly: skolem . nnf . simplify
+con'norm'form = specialize . prenex . a'skolemize
 
 
-features'exists :: Formula -> Bool
-features'exists S.True = False
-features'exists S.False = False
-features'exists (Atom _) = False
-features'exists (Not p) = features'exists p
-features'exists (And p q) = features'exists p || features'exists q
-features'exists (Or p q) = features'exists p || features'exists q
-features'exists (Impl p q) = features'exists p || features'exists q
-features'exists (Eq p q) = features'exists p || features'exists q
-features'exists (Forall _ p) = features'exists p
-features'exists (Exists _ _) = True
+contains'exists :: Formula -> Bool
+contains'exists S.True = False
+contains'exists S.False = False
+contains'exists (Atom _) = False
+contains'exists (Not p) = contains'exists p
+contains'exists (And p q) = contains'exists p || contains'exists q
+contains'exists (Or p q) = contains'exists p || contains'exists q
+contains'exists (Impl p q) = contains'exists p || contains'exists q
+contains'exists (Eq p q) = contains'exists p || contains'exists q
+contains'exists (Forall _ p) = contains'exists p
+contains'exists (Exists _ _) = True

@@ -14,7 +14,7 @@ import Data.Set qualified as Set
 import Lexer ( lexer, {- use'lexer, -} read'token )
 import Parser ( parse'theorems, parse'formula, parse'module, parse'two'formulae )
 import Syntax qualified as S
-import Lib ( resolution, resolution'', pure'resolution', pren'norm'form, pnf, specialize, skolemise, a'skolemize, skol'norm'form, simp'cnf, con'norm'form, list'conj, simp'dnf, fv, negate, neg'norm'form, nnf, features'exists, resolve'clauses, list'disj, list'conj, generalize )
+import Given'Clause ( resolution, resolution'', pure'resolution', pren'norm'form, pnf, specialize, skolemise, a'skolemize, skol'norm'form, simp'cnf, con'norm'form, list'conj, simp'dnf, fv, negate, neg'norm'form, nnf, contains'exists, resolve'clauses, list'disj, list'conj, generalize )
 
 
 main :: IO ()
@@ -309,12 +309,12 @@ cnf prompt'len assumptions formula = do
       putStrLn $! padding ++ "^"
       putStrLn err
     Right fm -> do
-      if features'exists fm
+      if contains'exists fm
       then do
-        putStrLn "⚠️  I can't perform the CNF conversion on a non-propositional formula."
-        putStrLn "   The formula contains existential quantifiers."
-        putStrLn "   This would require skolemization, a process that might produce only a equisatisfiable formula."
-        putStrLn $! show (con'norm'form fm)
+        putStrLn "⚠️  I can't perform the CNF conversion on a non-propositional formula containing an existential quantifier."
+        putStrLn "   This would require skolemization, a process that would produce only an equisatisfiable formula."
+        putStrLn "   The following is a result of doing so, be warned!"
       else do
-        putStrLn $! show (con'norm'form fm)
+        return ()
+      putStrLn $! show (con'norm'form fm)
   repl assumptions
