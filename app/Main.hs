@@ -5,7 +5,7 @@ import Prelude hiding ( negate )
 
 import System.IO ( hFlush, stdout, openFile, IOMode(ReadMode), hGetContents )
 import System.Environment ( getArgs )
-import Control.Monad ( mapM_ )
+import Control.Monad ( mapM_, unless )
 import Data.List qualified as List
 import Data.List.Extra qualified as List
 import Data.Set qualified as Set
@@ -68,10 +68,10 @@ repl assumptions = do
       repl assumptions
     
     ':' : 'e' : 'n' : 't' : 'a' : 'i' : 'l' : 's' : ' ' : formula -> do
-      entails (prompt'len + 9) assumptions formula
+      find (prompt'len + 9) assumptions formula
 
     ':' : 'e' : ' ' : formula -> do
-      entails (prompt'len + 3) assumptions formula
+      find (prompt'len + 3) assumptions formula
 
     ':' : 'f' : 'i' : 'n' : 'd' : ' ' : formula -> do
       find (prompt'len + 6) assumptions formula
@@ -85,6 +85,8 @@ repl assumptions = do
     ':' : 'c' : 'l' : 'e' : 'a' : 'r' : _ -> do
       repl [S.True]
 
+    
+    {-  The following commands are mostly for debugging formulae.   -}
     ':' : 's' : 'k' : 'o' : 'l' : 'e' : 'm' : 'i' : 'z' : 'e' : ' ' : formula -> do
       skolemize (prompt'len + 11) assumptions formula
 
@@ -124,19 +126,19 @@ repl assumptions = do
           putStrLn $! show (pren'norm'form fm)
       repl assumptions
 
-    ':' : 'r' : 'e' : 's' : 'o' : 'l' : 'v' : 'e' : ' ' : formulae -> do
-      case parse'two'formulae formulae of
-        Left (err, col) -> do
-          let padding = take (prompt'len + 5 + col) $! repeat ' '
-          putStrLn $! padding ++ "^"
-          putStrLn err
-        Right (fm1, fm2) -> do
-          let cl1 = simp'cnf . specialize . skolemise $! fm1
-          let cl2 = simp'cnf . specialize . skolemise $! fm2
+    -- ':' : 'r' : 'e' : 's' : 'o' : 'l' : 'v' : 'e' : ' ' : formulae -> do
+    --   case parse'two'formulae formulae of
+    --     Left (err, col) -> do
+    --       let padding = take (prompt'len + 5 + col) $! repeat ' '
+    --       putStrLn $! padding ++ "^"
+    --       putStrLn err
+    --     Right (fm1, fm2) -> do
+    --       let cl1 = simp'cnf . specialize . skolemise $! fm1
+    --       let cl2 = simp'cnf . specialize . skolemise $! fm2
 
-          let resolvents = Set.toList $! Set.map list'disj $! resolve'clauses (List.head cl1) (List.head cl2)
-          putStrLn $! List.intercalate "\n" (map (show . generalize) resolvents)
-      repl assumptions
+    --       let resolvents = Set.toList $! Set.map list'disj $! resolve'clauses (List.head cl1) (List.head cl2)
+    --       putStrLn $! List.intercalate "\n" (map (show . generalize) resolvents)
+    --   repl assumptions
 
 
     -- ':' : 't' : 'o' : 'k' : ' ' : input -> do
@@ -153,6 +155,7 @@ repl assumptions = do
         Right fm -> do
           putStrLn $! show fm
       repl assumptions
+    {-  END of debugging commands.  -}
 
     ':' : _ -> do
       putStrLn "I don't know this command, sorry."
@@ -163,7 +166,7 @@ repl assumptions = do
 
     --  Because what the prompt looks like, the `entails` check is the default.
     formula -> do
-      entails prompt'len assumptions formula
+      find prompt'len assumptions formula
 
 
 try'to'prove :: [S.Formula] -> S.Theorem -> IO ()
@@ -245,16 +248,16 @@ assume prompt'len assumptions formula = do
       repl $! fm : assumptions
 
 
-entails :: Int -> [S.Formula] -> String -> IO ()
-entails prompt'len assumptions formula = do
-  case parse'formula formula of
-    Left (err, col) -> do
-      let padding = take (prompt'len + col) $! repeat ' '
-      putStrLn $! padding ++ "^"
-      putStrLn err
-    Right fm -> do
-      try'to'prove'anon assumptions fm
-  repl assumptions
+-- entails :: Int -> [S.Formula] -> String -> IO ()
+-- entails prompt'len assumptions formula = do
+--   case parse'formula formula of
+--     Left (err, col) -> do
+--       let padding = take (prompt'len + col) $! repeat ' '
+--       putStrLn $! padding ++ "^"
+--       putStrLn err
+--     Right fm -> do
+--       try'to'prove'anon assumptions fm
+--   repl assumptions
 
 
 find :: Int -> [S.Formula] -> String -> IO ()
@@ -273,8 +276,7 @@ find prompt'len assumptions formula = do
         Just answers -> do
           putStrLn $! "✅ the conclusion  `" ++ show conclusion ++ "'  is a logical consequence of the assumptions"
           let assignment = map (\ (exis, term) -> "   for `" ++ exis ++ "' being `" ++ show term ++ "'") answers
-          putStrLn $! List.intercalate ", " assignment
-          -- putStrLn $! show answers
+          unless (List.null assignment) $! putStrLn $! List.intercalate ", " assignment
   repl assumptions
 
 

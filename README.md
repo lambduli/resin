@@ -180,4 +180,5 @@ The second book's chapters 7 - 9 contain a lot of information. The whole book is
   - [x] the theorem prover mode
     - [x] normal mode
     - [x] verbose mode
+    - [x] unify both implementations (or rather use the one that deals with existential goals) so that when a theorem in file is existentially quantified and valid, print the assignments that satisfy it
 - [x] Support for existential queries (should give constructive answers)
