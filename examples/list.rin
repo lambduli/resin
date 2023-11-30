@@ -11,6 +11,9 @@ axioms: ∀ head tail Head(Cons(head, tail), head)
 
       , ∀ x Less(zero, suc(x))
       , ∀ x y Less(x, y) ==> Less(suc(x), suc(y))
+
+      % , (∀ n (Less(zero, suc(n))) ==> (Less(zero, suc(suc(n)))) ) ==> ∀ k Less(zero, suc(k))
+      , ∀ n k Less(n, k) ==> ¬Less(k, n)
       
       % , ∀ x y Less(x, y) <==> Less(suc(x), suc(y))        % if and only if
       % , ∀ x ¬Less(x, zero)                                % a NOT base case
@@ -26,7 +29,7 @@ axioms: ∀ head tail Head(Cons(head, tail), head)
 
       , Sorted(Nil)
       , ∀ x Sorted(Cons(x, Nil))
-      % , ∀ head head' Less(head, head') ==> Sorted(Cons(head, Cons(head', Nil)))
+      , ∀ head head' Less(head, head') ==> Sorted(Cons(head, Cons(head', Nil)))
       % , ∀ head head' ¬Less(head, head') ==> ¬Sorted(Cons(head, Cons(head', Nil)))
       , ∀ head head' tail Less(head, head') ∧ Sorted(Cons(head', tail)) <==> Sorted(Cons(head, Cons(head', tail)))
       .
