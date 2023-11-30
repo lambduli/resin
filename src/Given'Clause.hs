@@ -16,6 +16,8 @@ type Literal = Formula
 
 type Clause = [Literal]
 
+type Conjunct = [Literal] -- a Disjunction of Literals (because when _ ∧ _ then both _s are Conjuncts and if the Formula is in CNF then they both are Disjunctions).
+
 
 over'atoms :: (Rel -> b -> b) -> Formula -> b -> b
 over'atoms _ S.True b = b
@@ -142,9 +144,9 @@ pure'cnf fm = image (image negate) (pure'dnf (nnf (Not fm)))
     image fn l = Set.toList $! Set.map fn (Set.fromList l)
 
 
-simp'cnf :: Formula -> [[Formula]]
-simp'cnf S.False = [[]]
-simp'cnf S.True = []
+simp'cnf :: Formula -> [Clause]
+simp'cnf S.False = [[]] -- a conjunction where the only (explicit) disjunction is written also like this: ⊥ ∨ ⊥
+simp'cnf S.True = []  -- an empty conjunction, written also like this: ⊤ ∧ ⊤
 simp'cnf fm =
   let cjs           = filter (not . trivial) (pure'cnf fm)
       cjs'sets      = map Set.fromList cjs
@@ -153,8 +155,8 @@ simp'cnf fm =
 
 
 {-  Conjunction Normal Form   -}
-cnf :: Formula -> Formula
-cnf fm = list'conj $! map list'disj $! simp'cnf fm
+-- cnf :: Formula -> Formula
+-- cnf fm = list'conj $! map list'disj $! simp'cnf fm
 
 
 {-  Predicate Logic   -}
@@ -532,12 +534,13 @@ res'loop (_, ([] : _)) = True     -- the current Conjunct/Disjunction is a contr
 res'loop (used, unused@(cl : cls))
   = let used' = Set.toList $! cl `Set.insert` Set.fromList used
         resolvents = map (resolve'clauses cl) used'
+        news :: Set.Set Conjunct
         news = foldl' Set.union Set.empty resolvents
         
         -- fn a b = incorporate cl b a
         -- new'unused = List.foldl' fn cls (Set.toList news)
     -- in  ([] `List.elem` news) || res'loop (used', new'unused)
-    in  ([] `List.elem` news) || res'loop (used', cls ++ Set.toList news)
+    in  ([] `Set.member` news) || res'loop (used', cls ++ Set.toList news)
 
 
 res'loop'' :: ([Clause], [Clause]) -> Maybe [Formula]
