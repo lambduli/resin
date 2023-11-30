@@ -526,8 +526,9 @@ incorporate gcl cl unused
     else replace cl unused
 
 
-res'loop :: ([Clause], [Clause]) -> Bool
-res'loop (_, []) = False -- the book raises an error, I don't see why
+res'loop :: ([Conjunct], [Conjunct]) -> Bool
+res'loop (_, []) = False          -- the book raises an error, I don't see why
+res'loop (_, ([] : _)) = True     -- the current Conjunct/Disjunction is a contradiction already
 res'loop (used, unused@(cl : cls))
   = let used' = Set.toList $! cl `Set.insert` Set.fromList used
         resolvents = map (resolve'clauses cl) used'
