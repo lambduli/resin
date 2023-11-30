@@ -1,0 +1,24 @@
+constants: Dean, Sam, John, Mary .
+
+axioms: FatherOf(John, Dean)
+      , FatherOf(John, Sam)
+      , MotherOf(Mary, Dean)
+      , MotherOf(Mary, Sam)
+      % , Eq(John, John)
+      % , Eq(Mary, Mary)
+      % , Eq(Dean, Dean)
+      % , Eq(Sam, Sam)
+      , ¬Eq(Dean, Sam)
+      , ¬Eq(Sam, Dean)
+      , ∀ x y f m (¬Eq(x, y)) ∧ FatherOf(f, x) ∧ FatherOf(f, y) ∧ MotherOf(m, x) ∧ MotherOf(m, y) ==> Siblings(x, y) .
+
+
+theorem dean-and-sam-are-siblings : Siblings(Dean, Sam) .
+
+theorem sam-and-dean-are-siblings : Siblings(Sam, Dean) .
+
+theorem dean-has-a-brother: ∃ b Siblings(Dean, b) .
+
+theorem sam-has-a-brother: ∃ j Siblings(Sam, j) .
+
+theorem there-are-siblings: ∃ b j Siblings(j, b) .

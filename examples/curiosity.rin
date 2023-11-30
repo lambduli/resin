@@ -37,11 +37,16 @@ theorem curiosity-is-killer-implies-jack-didn't-kill-tuna
 
 % what about the following theorem?
 % theorem curiosity-is-killer-implies-jack-isn't
-%         : ∀ x ∀ y Kills(x, y) ==> Killer(x)
-%         ⊢ Killer(Curiosity) ==> ¬Killer(Jack) .
+%         : ∀ x ∀ y Kills(x, y) ==> Terrible(x)
+%         ⊢ Terrible(Curiosity) ==> ¬Terrible(Jack) .
 % what is the reason why it is not provable? (it's not valid, but why?)
 
 
-theorem curiosity-is-killer-implies-jack-sin't
-        : ∀ x ∀ y Kills(x, y) <==> Killer(x)
-        ⊢ Killer(Curiosity) ==> ¬Killer(Jack) .
+theorem curiosity-is-monster-implies-jack-isn't
+        : ∀ x ∀ y Kills(x, y) <==> Monster(x)
+        ⊢ Monster(Curiosity) ==> ¬Monster(Jack) .
+        % He isn't because he is not even a killer.
+
+
+theorem curiosity-killed-implies-jack-didn't
+        : Kills(Curiosity, Tuna) ==> ¬Kills(Jack, Tuna) .

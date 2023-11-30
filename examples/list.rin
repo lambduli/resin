@@ -12,8 +12,8 @@ axioms: ∀ head tail Head(Cons(head, tail), head)
       , ∀ x Less(zero, suc(x))
       , ∀ x y Less(x, y) ==> Less(suc(x), suc(y))
       
-      , ∀ x y Less(x, y) <==> Less(suc(x), suc(y))        % if and only if
-      , ∀ x ¬Less(x, zero)                                % a NOT base case
+      % , ∀ x y Less(x, y) <==> Less(suc(x), suc(y))        % if and only if
+      % , ∀ x ¬Less(x, zero)                                % a NOT base case
       
       % , ¬Less(suc(suc(suc(suc(suc(zero))))), suc(zero))   % modus tolens
       % , ¬Less(suc(suc(suc(suc(zero)))), suc(suc(zero)))   % modus tolens
@@ -26,9 +26,9 @@ axioms: ∀ head tail Head(Cons(head, tail), head)
 
       , Sorted(Nil)
       , ∀ x Sorted(Cons(x, Nil))
-      , ∀ head head' Less(head, head') ==> Sorted(Cons(head, Cons(head', Nil)))
-      , ∀ head head' ¬Less(head, head') ==> ¬Sorted(Cons(head, Cons(head', Nil)))
-      , ∀ head head' tail Less(head, head') ∧ Sorted(Cons(head', tail)) ==> Sorted(Cons(head, Cons(head', tail)))
+      % , ∀ head head' Less(head, head') ==> Sorted(Cons(head, Cons(head', Nil)))
+      % , ∀ head head' ¬Less(head, head') ==> ¬Sorted(Cons(head, Cons(head', Nil)))
+      , ∀ head head' tail Less(head, head') ∧ Sorted(Cons(head', tail)) <==> Sorted(Cons(head, Cons(head', tail)))
       .
 
 % ∀ h Last(Cons(h, Nilᶜ), h)

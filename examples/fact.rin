@@ -3,31 +3,13 @@ constants: zero .
 
 axioms: ∀ n Plus(zero, n, n)
       , ∀ n m r Plus(n, m, r) ==> Plus(suc(n), m, suc(r))
-      % , Plus(zero, zero, zero) % redundant
-      % , [∀ n m r Plus(n, m, r) ==> Plus(suc(n), m, suc(r))] ==> ∀ o ∃ m n Plus(m, n, o) % redundant
-      , ∀ b ([∀ k (∃ c Plus(k, b, c) ==> ∃ c Plus(suc(k), b, c))] ==> ∀ n ∃ c Plus(n, b, c))
+
       , ∀ n Times(zero, n, zero)
       , ∀ n m r a [Times(n, m, r) ∧ Plus(r, m, a) ==> Times(suc(n), m, a)]
+
       , Fact(zero, suc(zero))
       , ∀ n pr r [Fact(n, pr) ∧ Times(suc(n), pr, r) ==> Fact(suc(n), r)]
-      % , Nat(zero)
-      % , ∀ n Nat(n) ==> Nat(suc(n))
       .
-
-
-% OK
-theorem zero-plus-one-is-one: Plus(zero, suc(zero), suc(zero)) .
-
-
-% OK
-theorem n-plus-1-is-suc-n : ∀ n Plus(suc(zero), n, suc(n)) .
-
-
-% CAN'T TODO: figure out what inductive property does it require
-% theorem sum-zero-rhs: ∀ n Plus(n, zero, n) .
-
-
-theorem plus-is-total : ∀ m n ∃ o Plus(m, n, o) .
 
 
 theorem fact-zero-is-one: Fact(zero, suc(zero)) .

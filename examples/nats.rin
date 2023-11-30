@@ -1,12 +1,23 @@
-% I can define constant symbols
 constants: zero, blah .
 
 
-% and axioms
-axioms: ∀ n Nat(n) ==> Nat(suc(n))
+axioms  % natural numbers first
+      : ∀ n Nat(n) ==> Nat(suc(n))
       , Nat(zero)
+
+        % addition, next
+      , ∀ n Plus(zero, n, n)
+      , ∀ n m r Plus(n, m, r) ==> Plus(suc(n), m, suc(r))
+
+        % induction
+      , ∀ b ([∀ k (∃ c Plus(k, b, c) ==> ∃ c Plus(suc(k), b, c))] ==> ∀ n ∃ c Plus(n, b, c))
+      , (∀ k (Plus(k, zero, k)) ==> Plus(suc(k), zero, suc(k))) ==> ∀ n Plus(n, zero, n)
+
       , ∀ x Less(zero, suc(x))
-      , ∀ x y Less(x, y) ==> Less(suc(x), suc(y)) .
+      , ∀ x y Less(x, y) ==> Less(suc(x), suc(y))
+
+      , Eq(zero, zero)
+      , ∀ k n Eq(k, n) ==> Eq(suc(k), suc(n)) .
 
 
 % this says that one is a natural number
@@ -14,24 +25,27 @@ theorem one-is-nat: Nat(suc(zero)) .
 
 
 % can not prove the following:
-% theorem no-nats : ∀ n ¬NAT(n) .
+% theorem no-nats : ∀ n ¬Nat(n) .
 
 % but can we prove the negation?
 theorem some-nats : ∃ n Nat(n) .
 
 
 % can not prove the following:
-% theorem zero-is-not-nat : ¬NAT(zero) .
+% theorem zero-is-not-nat : ¬Nat(zero) .
 
 % but can we prove the negation?
 theorem zero-is-nat : Nat(zero) .
+
+
+% theorem blah-is-not-zero: ¬Eq(zero, blah) .
 
 
 % can not prove the following
 % theorem blah-is-nat: Nat(blah) .
 
 % but can we prove the negation?
-% theorem blah-is-not-nat : ¬NAT(blah) .
+% theorem blah-is-not-nat : ¬Nat(blah) .
 % no we can't, why?
 % We are asking if the axioms entail the conclusion of the thereom.
 % So it must not be possible for Nat(blah) to hold, when the axioms hold.
@@ -55,3 +69,19 @@ theorem zero-is-nat : Nat(zero) .
 theorem zero-is-less-than-two : Less(zero, suc(suc(zero))) .
 
 theorem one-is-less-than-three: Less(suc(zero), suc(suc(suc(zero)))) .
+
+
+% OK
+theorem zero-plus-one-is-one: Plus(zero, suc(zero), suc(zero)) .
+
+
+% OK
+theorem n-plus-1-is-suc-n : ∀ n Plus(suc(zero), n, suc(n)) .
+
+
+theorem sum-zero-rhs: ∀ n Plus(n, zero, n) .
+
+theorem induct0: ∀ k (Plus(k, zero, k)) ==> Plus(suc(k), zero, suc(k)) .
+
+
+theorem plus-is-total : ∀ m n ∃ o Plus(m, n, o) .
