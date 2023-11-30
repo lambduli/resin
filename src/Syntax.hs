@@ -36,7 +36,7 @@ instance Show Term where
 
 instance Show Formula where
   show True = "⊤"
-  show False = "⊤"
+  show False = "⊥"
   show (Atom (Rel n [])) = n
   show (Atom (Rel n terms)) = n ++ "(" ++ intercalate ", " (map show terms) ++ ")"
   show (Not p) | is'compound p  = "¬(" ++ show p ++ ")"
