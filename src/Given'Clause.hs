@@ -587,7 +587,9 @@ resolution'' assumptions fm@(Exists x p)
           Nothing -> Nothing
           Just formulae ->
             Just $! map (\ (Atom (Rel "_Answer_" [term, Fn name []])) -> (name, term)) formulae
-
+resolution'' assumptions fm = if resolution assumptions fm
+                              then Just []
+                              else Nothing
 
 resolution :: [Formula] -> Formula -> Bool  
 resolution assumptions conclusion
