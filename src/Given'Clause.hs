@@ -252,6 +252,8 @@ nnf (Forall x p) = Forall x (nnf p)
 nnf (Exists x p) = Exists x (nnf p)
 nnf (Not (Forall x p)) = Exists x (nnf (Not p))
 nnf (Not (Exists x p)) = Forall x (nnf (Not p))
+-- nnf (Not S.True) = S.False
+-- nnf (Not S.False) = S.True
 nnf fm = fm
 
 
@@ -528,33 +530,24 @@ incorporate gcl cl unused
     else replace cl unused
 
 
-res'loop :: ([Conjunct], [Conjunct]) -> Bool
-res'loop (_, []) = False          -- the book raises an error, I don't see why
-res'loop (_, ([] : _)) = True     -- the current Conjunct/Disjunction is a contradiction already
+res'loop :: ([Conjunct], [Conjunct]) -> Maybe [Formula]
+res'loop (_, []) = Nothing
+
+-- the current Conjunct/Disjunction is a contradiction already
+-- which is weird, because now I don't have assignments for the existential goal
+res'loop (_, (cl : _))
+  | Just _ <- contains'contradiction [cl] = Just []
+
 res'loop (used, unused@(cl : cls))
-  = let used' = Set.toList $! cl `Set.insert` Set.fromList used
-        resolvents = map (resolve'clauses cl) used'
-        news :: Set.Set Conjunct
-        news = foldl' Set.union Set.empty resolvents
-        
-        -- fn a b = incorporate cl b a
-        -- new'unused = List.foldl' fn cls (Set.toList news)
-    -- in  ([] `List.elem` news) || res'loop (used', new'unused)
-    in  ([] `Set.member` news) || res'loop (used', cls ++ Set.toList news)
-
-
-res'loop'' :: ([Clause], [Clause]) -> Maybe [Formula]
-res'loop'' (_, []) = Nothing
-res'loop'' (used, unused@(cl : cls))
   = let used' = Set.toList $! cl `Set.insert` Set.fromList used
         resolvents = map (resolve'clauses cl) used'
         news = Set.toList $! foldl' Set.union Set.empty resolvents
     in  case contains'contradiction news of
-          Nothing -> res'loop'' (used', cls ++ news)
+          Nothing -> res'loop (used', cls ++ news)
           Just answers -> Just answers
 
 
-contains'contradiction :: [Clause] -> Maybe [Formula]
+contains'contradiction :: [Conjunct] -> Maybe [Formula]
 contains'contradiction = List.find (\ formulae -> List.all is'answer formulae && all'unique (List.map (\ (Atom (Rel "_Answer_" [_, Fn x _])) -> x) formulae))
 
 
@@ -567,16 +560,17 @@ is'answer (Atom (Rel "_Answer_" [_, _])) = True
 is'answer _ = False
 
 
-pure'resolution' :: Formula -> Bool
-pure'resolution' fm = res'loop ([], simp'cnf . specialize . skolemise $! fm)
+-- pure'resolution' :: Formula -> Bool
+-- pure'resolution' fm = res'loop ([], simp'cnf . specialize . skolemise $! fm)
 
 
-pure'resolution'' :: Formula -> Maybe [Formula]
-pure'resolution'' fm = res'loop'' ([], simp'cnf . specialize . skolemise $! fm)
+pure'resolution :: Formula -> Maybe [Formula]
+pure'resolution fm = res'loop ([], simp'cnf . specialize . skolemise $! fm)
 
 
-resolution'' :: [Formula] -> Formula -> Maybe [(String, Term)]
-resolution'' assumptions fm@(Exists x p)
+{-  This function can deal with formulae in the form of existentials. If it succeeds, it finds a proof of that existential goal.  -}
+resolution :: [Formula] -> Formula -> Maybe [(String, Term)]
+resolution assumptions fm@(Exists x p)
   = -- find all the existentially quantified variables at the top level
     let all'exs = all'existentials fm
         neg'fm  = nnf (negate fm)
@@ -586,19 +580,22 @@ resolution'' assumptions fm@(Exists x p)
         answers   = map (\ (u, e) -> Atom (Rel "_Answer_" [Var u, Fn e []])) $! zip all'unis all'exs
         disjunction = List.foldr Forall (list'disj (p : answers)) all'unis
         full'fm   = list'conj (disjunction : assumptions)
-    in  case pure'resolution'' full'fm of
+    in  case pure'resolution full'fm of
           Nothing -> Nothing
           Just formulae ->
             Just $! map (\ (Atom (Rel "_Answer_" [term, Fn name []])) -> (name, term)) formulae
-resolution'' assumptions fm = if resolution assumptions fm
-                              then Just []
-                              else Nothing
+resolution assumptions fm = case resolution' assumptions fm of
+                              Nothing -> Nothing
+                              Just formulae ->
+                                Just $! map (\ (Atom (Rel "_Answer_" [term, Fn name []])) -> (name, term)) formulae
 
-resolution :: [Formula] -> Formula -> Bool  
-resolution assumptions conclusion
+
+{-  This is just the ordinary resolution. It doesn't care about constructive or nonconstructive proofs and existential formulae.  -}
+resolution' :: [Formula] -> Formula -> Maybe [Formula]  
+resolution' assumptions conclusion
   = let neg'conclusion = negate conclusion
         fm = list'conj (neg'conclusion : assumptions)
-    in  pure'resolution' fm
+    in  pure'resolution fm
 
 
 all'existentials :: Formula -> [String]

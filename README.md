@@ -150,13 +150,19 @@ There are also a few commands for a simple transformation on formulae.
 2. [Artificial Intelligence: A Modern Approach](https://aima.cs.berkeley.edu)
 
 
-The first book is the where the source code comes from. It has been only slightly modified to end up being as close to the book's implementation as possible.
+The first book is the where the source code comes from. It has been only slightly modified to end up being as close to the book's implementation as possible while having a little bit different approach. The book seems to be using the resolution to prove or rather find contradictions in a single formula. This tool handles statements in a form of a logical entailment.
 
 The second book's chapters 7 - 9 contain a lot of information. The whole book is a good starting place for beginners in the topic, however, sometimes the book does not go into much details regarding some operations—one must use different resource for that, perhaps the first book.
+
+> In a future, I might write a short write-up about the implementation, all the differences between the code in the book and the one here and how the "trick" from the second book (to produce constructive proofs if applicable) fits into the framework.
+
+> Special Note: The code from the first book seems to not be handling situations where a contradiction (as a formula) is already a part of the original formula. In such cases it seems to me that the `cl` pattern-variable in the function `res'loop` becomes an empty list (empty disjunction, that is equivalent to `⊥`). In those cases the set of resolvents is empty and therefore we don't recognise it as a place to stop. It is clear to me, however, that we should terminate with a found contradiction right at this moment. I will look more into it, hopefully later.
 
 
 ## TODO
 
+- [ ] In all modes (file + REPL) add some flag that causes the following: when a statement can't seem to be proved using the usual algorithm, stop it (after some timeout) and see whether maybe the original goal was already unsatisfiable when conjugated with the assumptions; the flag could be something like `--bidirectional` or `--twoways`
+- [ ] In general, implement timeouts
 - [x] Lexer
   - [x] `ᶜ` is a special "constant" toke
 - [ ] Parser
@@ -182,3 +188,8 @@ The second book's chapters 7 - 9 contain a lot of information. The whole book is
     - [x] verbose mode
     - [x] unify both implementations (or rather use the one that deals with existential goals) so that when a theorem in file is existentially quantified and valid, print the assignments that satisfy it
 - [x] Support for existential queries (should give constructive answers)
+
+
+## Known BUGS
+
+None so far. 🤞

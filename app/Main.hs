@@ -11,10 +11,9 @@ import Data.List.Extra qualified as List
 import Data.Set qualified as Set
 
 
-import Lexer ( lexer, {- use'lexer, -} read'token )
-import Parser ( parse'theorems, parse'formula, parse'module, parse'two'formulae )
+import Parser ( parse'formula, parse'module, parse'two'formulae )
 import Syntax qualified as S
-import Given'Clause ( resolution, resolution'', pure'resolution', pren'norm'form, pnf, specialize, skolemise, a'skolemize, skol'norm'form, simp'cnf, con'norm'form, list'conj, simp'dnf, fv, negate, neg'norm'form, nnf, contains'exists, resolve'clauses, list'disj, list'conj, generalize )
+import Given'Clause ( resolution, pure'resolution, resolution', pren'norm'form, skol'norm'form, con'norm'form, negate, neg'norm'form, nnf, contains'exists, list'conj )
 
 
 main :: IO ()
@@ -126,26 +125,6 @@ repl assumptions = do
           putStrLn $! show (pren'norm'form fm)
       repl assumptions
 
-    -- ':' : 'r' : 'e' : 's' : 'o' : 'l' : 'v' : 'e' : ' ' : formulae -> do
-    --   case parse'two'formulae formulae of
-    --     Left (err, col) -> do
-    --       let padding = take (prompt'len + 5 + col) $! repeat ' '
-    --       putStrLn $! padding ++ "^"
-    --       putStrLn err
-    --     Right (fm1, fm2) -> do
-    --       let cl1 = simp'cnf . specialize . skolemise $! fm1
-    --       let cl2 = simp'cnf . specialize . skolemise $! fm2
-
-    --       let resolvents = Set.toList $! Set.map list'disj $! resolve'clauses (List.head cl1) (List.head cl2)
-    --       putStrLn $! List.intercalate "\n" (map (show . generalize) resolvents)
-    --   repl assumptions
-
-
-    -- ':' : 't' : 'o' : 'k' : ' ' : input -> do
-    --   let tokens = use'lexer read'token input
-    --   putStrLn $! "All the tokens:\n" ++ List.intercalate "\n  " (map show tokens)
-    --   repl assumptions
-
     ':' : 'r' : 'e' : 'p' : 'e' : 'a' : 't' : ' ' : formula -> do
       case parse'formula formula of
         Left (err, col) -> do
@@ -173,13 +152,12 @@ try'to'prove :: [S.Formula] -> S.Theorem -> IO ()
 try'to'prove axioms (S.Theorem{ S.name = name
                               , S.assumptions = assumptions
                               , S.conclusion = conclusion }) = do
-  let is'valid = resolution (axioms ++ assumptions) conclusion
-  if is'valid
-  then do
-    putStrLn $! "✅ theorem `" ++ name ++ "' is logically valid"
-  else do
-    putStrLn $! "❌ theorem `" ++ name ++ "' is not logically valid"
-    putStrLn $! "            an interpretation where all the assumptions and `" ++ show (nnf . negate $! conclusion) ++ "' all hold is possible"
+  case resolution' (axioms ++ assumptions) conclusion of
+    Just _ -> do
+      putStrLn $! "✅ theorem `" ++ name ++ "' is logically valid"
+    Nothing -> do
+      putStrLn $! "❌ theorem `" ++ name ++ "' is not logically valid"
+      putStrLn $! "            an interpretation where all the assumptions and `" ++ show (nnf . negate $! conclusion) ++ "' all hold is possible"
 
 
 try'to'prove'verbose :: [S.Formula] -> S.Theorem -> IO ()
@@ -192,25 +170,13 @@ try'to'prove'verbose axioms (S.Theorem{ S.name = name
   let pad = List.take pad'len $! List.repeat ' '
   putStrLn $! ' ' : List.intercalate ('\n' : pad ++ ", ") (map show (axioms ++ assumptions))
   putStrLn $! pad ++ "⊢ " ++ show conclusion ++ " ."
-  let is'valid = resolution (axioms ++ assumptions) conclusion
-  if is'valid
-  then do
-    putStrLn $! "✅ theorem `" ++ name ++ "' is logically valid"
-  else do
-    putStrLn $! "❌ theorem `" ++ name ++ "' is not logically valid"
-    putStrLn $! "            an interpretation where all the assumptions and `" ++ show (nnf . negate $! conclusion) ++ "' all hold is possible"
+  case resolution' (axioms ++ assumptions) conclusion of
+    Just _ -> do
+      putStrLn $! "✅ theorem `" ++ name ++ "' is logically valid"
+    Nothing -> do
+      putStrLn $! "❌ theorem `" ++ name ++ "' is not logically valid"
+      putStrLn $! "            an interpretation where all the assumptions and `" ++ show (nnf . negate $! conclusion) ++ "' all hold is possible"
   putStrLn ""
-
-
-try'to'prove'anon :: [S.Formula] -> S.Formula -> IO ()
-try'to'prove'anon assumptions conclusion = do
-  let is'valid = resolution assumptions conclusion
-  if is'valid
-  then do
-    putStrLn $! "✅ the conclusion  `" ++ show conclusion ++ "'  is a logical consequence of the assumptions"
-  else do
-    putStrLn $! "❌ the conclusion  `" ++ show conclusion ++ "'  is not a logical consequence of the assumptions"
-    putStrLn $! "            an interpretation where all the assumptions and `" ++ show (nnf . negate $! conclusion) ++ "' all hold is possible"
 
 
 check :: [S.Formula] -> String -> IO ()
@@ -248,18 +214,6 @@ assume prompt'len assumptions formula = do
       repl $! fm : assumptions
 
 
--- entails :: Int -> [S.Formula] -> String -> IO ()
--- entails prompt'len assumptions formula = do
---   case parse'formula formula of
---     Left (err, col) -> do
---       let padding = take (prompt'len + col) $! repeat ' '
---       putStrLn $! padding ++ "^"
---       putStrLn err
---     Right fm -> do
---       try'to'prove'anon assumptions fm
---   repl assumptions
-
-
 find :: Int -> [S.Formula] -> String -> IO ()
 find prompt'len assumptions formula = do
   case parse'formula formula of
@@ -268,11 +222,11 @@ find prompt'len assumptions formula = do
       putStrLn $! padding ++ "^"
       putStrLn err
     Right conclusion -> do
-      -- try'to'prove'anon assumptions fm
-      case resolution'' assumptions conclusion of
+      case resolution assumptions conclusion of
         Nothing -> do
-          putStrLn $! "❌ no such objects found, `" ++ show conclusion ++ "'  is not a logical consequence of the assumptions"
-          putStrLn $! "            an interpretation where all the assumptions and `" ++ show (nnf . negate $! conclusion) ++ "' all hold is possible"
+          let pad = List.take prompt'len $! List.repeat ' '
+          putStrLn $! "❌ `" ++ show conclusion ++ "'  is not a logical consequence of the assumptions"
+          putStrLn $! pad ++ " an interpretation where all the assumptions and `" ++ show (nnf . negate $! conclusion) ++ "' all hold is possible"
         Just answers -> do
           putStrLn $! "✅ the conclusion  `" ++ show conclusion ++ "'  is a logical consequence of the assumptions"
           let assignment = map (\ (exis, term) -> "   for `" ++ exis ++ "' being `" ++ show term ++ "'") answers
@@ -283,11 +237,11 @@ find prompt'len assumptions formula = do
 consistent :: [S.Formula] -> IO ()
 consistent assumptions = do
   let fm = list'conj assumptions
-  if pure'resolution' fm
-  then do
-    putStrLn "❌ the current set of assumptions is not logically consistent"
-  else do
-    putStrLn "✅ the current set of assumptions is logically consistent"
+  case pure'resolution fm of
+    Just _ -> do
+      putStrLn "❌ the current set of assumptions is not logically consistent"
+    Nothing -> do
+      putStrLn "✅ the current set of assumptions is logically consistent"
   repl assumptions
 
 
