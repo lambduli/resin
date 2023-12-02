@@ -133,7 +133,7 @@ There are also a few commands for a simple transformation on formulae.
 
 9) To put a formula `ƒ` into a *Skolem Normal Form*, type `:skolemize <ƒ>`.
 
-10) To put a propositional formula `ƒ` into a *Conjunction Normal Form*, type `:cnf <ƒ>`. However, be aware that this will only work when the formula does not contain existential quantifiers. Those require skolemization and that leads to only *equisatisfiable* not *equivalent* formulae. The tool will reject formulae with `∃` with `:cnf` command.
+10) To put a propositional formula `ƒ` into a *Conjunction Normal Form*, type `:cnf <ƒ>`. However, be aware that this will only really work when the formula does not contain existential quantifiers. Those require skolemization and that leads to only *equisatisfiable* not *equivalent* formulae. The tool will complain a bit but it will produce the *equisatisfiable* formula for the input.
 
 
 ## Q&A

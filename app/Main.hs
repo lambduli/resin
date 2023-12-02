@@ -267,7 +267,7 @@ cnf prompt'len assumptions formula = do
     Right fm -> do
       if contains'exists fm
       then do
-        putStrLn "⚠️  I can't perform the CNF conversion on a non-propositional formula containing an existential quantifier."
+        putStrLn "⚠️  I can't really perform the CNF conversion on a FOL formula containing an existential quantifier."
         putStrLn "   This would require skolemization, a process that would produce only an equisatisfiable formula."
         putStrLn "   The following is a result of doing so, be warned!"
       else do
