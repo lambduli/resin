@@ -2,7 +2,7 @@
 module Lexer ( lexer, read'token, eval'parser, {- use'lexer, -} Lexer(..), AlexInput(..), Lexer'State(..) ) where
 
 
-import Control.Monad.Except ( Except, runExcept )
+import Control.Monad.Except ( Except, runExcept, throwError )
 import Control.Monad.State ( MonadState(get, put), gets, StateT( runStateT ) )
 
 import Data.Word ( Word8 )
@@ -11,9 +11,6 @@ import Data.List ( uncons )
 
 import Token ( Token )
 import Token qualified as Token
-
-import Debug.Trace ( trace )
-
 
 }
 
@@ -127,6 +124,7 @@ emit mk't str = return (mk't str)
 lexer :: (Token -> Lexer a) -> Lexer a
 lexer cont = read'token >>= cont
 
+
 read'token :: Lexer Token
 read'token = do
   s <- get
@@ -134,7 +132,7 @@ read'token = do
     AlexEOF -> return Token.EOF
 
     AlexError inp' ->
-      error $! "Lexical error on line " ++ (show $! ai'line'no inp') ++ " and column " ++ (show $! ai'col'no inp')
+      throwError ("Lexical error on line " ++ (show $! ai'line'no inp') ++ " and column " ++ (show $! ai'col'no inp'), ai'col'no inp')
     
     AlexSkip inp' _ -> do
       put s{ lexer'input = inp' }
