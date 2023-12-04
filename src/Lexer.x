@@ -1,5 +1,5 @@
 {
-module Lexer ( lexer, read'token, eval'parser, {- use'lexer, -} Lexer(..), AlexInput(..), Lexer'State(..) ) where
+module Lexer ( lexer, read'token, eval'parser, Lexer(..), AlexInput(..), Lexer'State(..) ) where
 
 
 import Control.Monad.Except ( Except, runExcept, throwError )
@@ -100,8 +100,6 @@ $space+                 ;
 "⟺"                     { \_ -> token Token.Equivalence }
 
 
--- "_"                     { \_ -> token Token.Underscore }
-
 
 @lowerident             { emit Token.Lower'Var }
 
@@ -178,21 +176,6 @@ get'line'no = gets (ai'line'no . lexer'input)
 
 get'col'no :: Lexer Int
 get'col'no = gets (ai'col'no . lexer'input)
-
-
--- use'lexer :: Lexer Token -> String -> [Token]
--- use'lexer lexer source
---   = go [] $ runState lexer (initial'state source)
---     where
---       -- go :: [a] -> (a, Lexer'State) -> [a]
---       go acc (t@Token.EOF, _)
---         = reverse (t : acc)
---       go acc (token, l'state)
---         = go (token : acc) $ runState lexer l'state
-
-
--- eval'parser :: Lexer a -> String -> a
--- eval'parser parser source = evalState parser (initial'state source)
 
 
 eval'parser :: Lexer a -> String -> Either (String, Int) (a, Lexer'State)
