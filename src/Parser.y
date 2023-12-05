@@ -1,7 +1,7 @@
 {
 {-# LANGUAGE FlexibleContexts #-}
 
-module Parser ( parse'module, parse'theorems, parse'formula, parse'two'formulae ) where
+module Parser ( parse'module, parse'theorems, parse'formula ) where
 
 import Control.Monad.Except ( throwError )
 import Control.Monad.State ( MonadState(get, put), gets )
@@ -21,7 +21,6 @@ import Syntax qualified as S
 %name parseModule Module
 %name parseTheorems Theorems
 %name parseFormula Formula
-%name parseTwoFormulae Formulae
 
 %tokentype { Token }
 %monad { Lexer }
@@ -136,10 +135,6 @@ Conclusion  ::  { Formula }
             :   Formula                     { $1 }
 
 
-Formulae    ::  { (Formula, Formula) }
-            :   Formula ',' Formula         { ($1, $3) }
-
-
 Formula     ::  { Formula }
             :   '⊤'                         { S.True }
             |   '⊥'                         { S.False }
@@ -248,10 +243,6 @@ parse'theorems source = mapRight fst $! eval'parser parseTheorems source
 
 parse'formula :: String -> Either (String, Int) Formula
 parse'formula source = mapRight fst $! eval'parser parseFormula source
-
-
-parse'two'formulae :: String -> Either (String, Int) (Formula, Formula)
-parse'two'formulae source = mapRight fst $! eval'parser parseTwoFormulae source
 
 
 parseError _ = do

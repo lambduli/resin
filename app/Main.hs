@@ -5,13 +5,12 @@ import Prelude hiding ( negate )
 
 import System.IO ( hFlush, stdout, openFile, IOMode(ReadMode), hGetContents )
 import System.Environment ( getArgs )
-import Control.Monad ( mapM_, unless )
+import Control.Monad ( unless )
 import Data.List qualified as List
 import Data.List.Extra qualified as List
-import Data.Set qualified as Set
 
 
-import Parser ( parse'formula, parse'module, parse'two'formulae )
+import Parser ( parse'formula, parse'module )
 import Syntax qualified as S
 import Given'Clause ( resolution, pure'resolution, resolution', pren'norm'form, skol'norm'form, con'norm'form, negate, neg'norm'form, nnf, contains'exists, list'conj )
 
@@ -25,8 +24,7 @@ main = do
       repl [S.True]
       putStrLn "Bye!"
     _ -> do
-      mapM_ (check [S.True]) args
-      -- repl [S.True]
+      mapM_ check args
 
 
 repl :: [S.Formula] -> IO ()
@@ -45,14 +43,14 @@ repl assumptions = do
       check'verbose assumptions file'path
 
     ':' : 'c' : 'h' : 'e' : 'c' : 'k' : ' ' : file'path -> do
-      check assumptions file'path
+      check file'path
       repl assumptions
 
     ':' : 'c' : 'h' : ' ' : 'v' : 'e' : 'r' : ' ' : file'path -> do
       check'verbose assumptions file'path
 
     ':' : 'c' : 'h' : ' ' : file'path -> do
-      check assumptions file'path
+      check file'path
       repl assumptions
 
     ':' : 'a' : 's' : 's' : 'u' : 'm' : 'e' : ' ' : formula -> do
@@ -179,12 +177,12 @@ try'to'prove'verbose axioms (S.Theorem{ S.name = name
   putStrLn ""
 
 
-check :: [S.Formula] -> String -> IO ()
-check assumptions file'path = do
+check :: String -> IO ()
+check file'path = do
   file'handle <- openFile (List.trim file'path) ReadMode
   file'content <- hGetContents file'handle
   case parse'module file'content of
-    Left (err, col) -> do
+    Left (err, _) -> do
       putStrLn err
     Right (_, axioms, theorems) -> do
       mapM_ (try'to'prove axioms) theorems
@@ -195,7 +193,7 @@ check'verbose assumptions file'path = do
   file'handle <- openFile (List.trim file'path) ReadMode
   file'content <- hGetContents file'handle
   case parse'module file'content of
-    Left (err, col) -> do
+    Left (err, _) -> do
       putStrLn err
     Right (_, axioms, theorems) -> do
       mapM_ (try'to'prove'verbose axioms) theorems
