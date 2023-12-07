@@ -560,10 +560,6 @@ is'answer (Atom (Rel "_Answer_" [_, _])) = True
 is'answer _ = False
 
 
--- pure'resolution' :: Formula -> Bool
--- pure'resolution' fm = res'loop ([], simp'cnf . specialize . skolemise $! fm)
-
-
 pure'resolution :: Formula -> Maybe [Formula]
 pure'resolution fm = res'loop ([], simp'cnf . specialize . skolemise $! fm)
 
@@ -580,14 +576,13 @@ resolution assumptions fm@(Exists x p)
         answers   = map (\ (u, e) -> Atom (Rel "_Answer_" [Var u, Fn e []])) $! zip all'unis all'exs
         disjunction = List.foldr Forall (list'disj (p : answers)) all'unis
         full'fm   = list'conj (disjunction : assumptions)
-    in  case pure'resolution full'fm of
-          Nothing -> Nothing
-          Just formulae ->
-            Just $! map (\ (Atom (Rel "_Answer_" [term, Fn name []])) -> (name, term)) formulae
-resolution assumptions fm = case resolution' assumptions fm of
-                              Nothing -> Nothing
-                              Just formulae ->
-                                Just $! map (\ (Atom (Rel "_Answer_" [term, Fn name []])) -> (name, term)) formulae
+    in  do
+      formulae <- pure'resolution full'fm
+      return $! map (\ (Atom (Rel "_Answer_" [term, Fn name []])) -> (name, term)) formulae
+
+resolution assumptions fm = do
+  formulae <- resolution' assumptions fm
+  return $! map (\ (Atom (Rel "_Answer_" [term, Fn name []])) -> (name, term)) formulae
 
 
 {-  This is just the ordinary resolution. It doesn't care about constructive or nonconstructive proofs and existential formulae.  -}
