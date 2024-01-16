@@ -164,7 +164,7 @@ The second book's chapters 7 - 9 contain a lot of information. The whole book is
 - [ ] In all modes (file + REPL) add some flag that causes the following: when a statement can't seem to be proved using the usual algorithm, stop it (after some timeout) and see whether maybe the original goal was already unsatisfiable when conjugated with the assumptions; the flag could be something like `--bidirectional` or `--twoways`
 - [ ] In general, implement timeouts
 - [x] Lexer
-  - [x] `ᶜ` is a special "constant" toke
+  - [x] `ᶜ` is a special "constant" token
 - [ ] Parser
   - [ ] fix the S/R conflicts
   - [x] fix the R/R conflicts
