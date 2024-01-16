@@ -1,41 +1,41 @@
-constants: zero .
+constants: 0 .
 
 
-axioms: ∀ n Plus(zero, n, n)
+axioms: ∀ n Plus(0, n, n)
       , ∀ n m r Plus(n, m, r) ==> Plus(suc(n), m, suc(r))
 
-      , ∀ n Times(zero, n, zero)
+      , ∀ n Times(0, n, 0)
       , ∀ n m r a [Times(n, m, r) ∧ Plus(r, m, a) ==> Times(suc(n), m, a)]
 
-      , Fact(zero, suc(zero))
+      , Fact(0, suc(0))
       , ∀ n pr r [Fact(n, pr) ∧ Times(suc(n), pr, r) ==> Fact(suc(n), r)]
       .
 
 
-theorem fact-zero-is-one: Fact(zero, suc(zero)) .
+theorem fact-0-is-one: Fact(0, suc(0)) .
 
-theorem fact-one-is-one : Fact(suc(zero), suc(zero)) .
+theorem fact-one-is-one : Fact(suc(0), suc(0)) .
 
-theorem exists-fact-for-one : ∃ n Fact(n, suc(zero)) .
+theorem exists-fact-for-one : ∃ n Fact(n, suc(0)) .
 
 % CAN'T  I guess it's just too many steps and too much memory.
-% theorem exists-fact-for-two : ∃ n Fact(suc(suc(n)), suc(suc(zero))) .
+% theorem exists-fact-for-two : ∃ n Fact(suc(suc(n)), suc(suc(0))) .
 
-theorem exists-sqr-rt-of-one: ∃ n Times(n, n, suc(zero)) .
+theorem exists-sqr-rt-of-one: ∃ n Times(n, n, suc(0)) .
 
-theorem exist-divisors-of-two : ∃ n m Times(n, m, suc(suc(zero))) .
-
-
-% theorem exists-divisor-of-four: ∃ n Times(n, suc(suc(zero)), suc(suc(suc(suc(zero))))) .
-
-% theorem exists-sqr-rt-of-four : ∃ n Times(n, n, suc(suc(suc(suc(zero))))) .
+theorem exist-divisors-of-two : ∃ n m Times(n, m, suc(suc(0))) .
 
 
-% theorem fact-one-of : One(suc(zero))
+% theorem exists-divisor-of-four: ∃ n Times(n, suc(suc(0)), suc(suc(suc(suc(0))))) .
+
+% theorem exists-sqr-rt-of-four : ∃ n Times(n, n, suc(suc(suc(suc(0))))) .
+
+
+% theorem fact-one-of : One(suc(0))
 %                     , ∀ n One(n) ==> 
-%                     , Zero(zero)
-%                     , ∀ n Zero(n) ==> Zero(zero)
-%                     ⊢ ∀ n Fact(n, suc(zero)) ==> One(n) ∨ Zero(n) .
+%                     , Zero(0)
+%                     , ∀ n Zero(n) ==> Zero(0)
+%                     ⊢ ∀ n Fact(n, suc(0)) ==> One(n) ∨ Zero(n) .
 
 
-% theorem exists-fact-for-six : ∃ n Fact(n, suc(suc(suc(suc(suc(suc(zero))))))) .
+% theorem exists-fact-for-six : ∃ n Fact(n, suc(suc(suc(suc(suc(suc(0))))))) .
