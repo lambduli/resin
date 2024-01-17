@@ -12,6 +12,8 @@ import Data.List ( uncons )
 import Token ( Token )
 import Token qualified as Token
 
+import Syntax ( Term )
+
 }
 
 %encoding "iso-8859-1"
@@ -23,7 +25,7 @@ $lower                = [a-z]
 
 $digit                = [0-9]
 
-@lowerident           = $lower [$lower \- \_ $digit \']*
+@lowerident           = [$lower $digit] [$lower \- \_ $digit \']*
 
 @upperident           = $upper [$lower $upper \- \_ $digit \']*
 
@@ -53,6 +55,7 @@ $space+                 ;
 "theorem"               { \_ -> token Token.Theorem }
 "constants"             { \_ -> token Token.Constants }
 "axioms"                { \_ -> token Token.Axioms }
+"aliases"               { \_ -> token Token.Aliases }
 ":"                     { \_ -> token Token.Colon }
 "⊢"                     { \_ -> token Token.Turnstile }
 
@@ -196,7 +199,8 @@ data AlexInput = Input
 data Lexer'State = Lexer'State
   { lexer'input   :: !AlexInput
   , constants     :: ![String]
-  , scope         :: ![String] }
+  , scope         :: ![String]
+  , aliases       :: ![(String, Term)] }
   deriving (Eq, Show)
 
 
@@ -208,6 +212,7 @@ initial'state s = Lexer'State
                         , ai'last'char  = '\n'
                         , ai'input      = s }
   , constants         = []
-  , scope             = [] }
+  , scope             = []
+  , aliases           = [] }
 
 }

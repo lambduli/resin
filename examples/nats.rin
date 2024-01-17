@@ -1,27 +1,28 @@
 constants: zero, blah .
 
+aliases : 0 = zero .
 
 axioms  % natural numbers first
       : ∀ n Nat(n) ==> Nat(suc(n))
-      , Nat(zero)
+      , Nat(0)
 
         % addition, next
-      , ∀ n Plus(zero, n, n)
+      , ∀ n Plus(0, n, n)
       , ∀ n m r Plus(n, m, r) ==> Plus(suc(n), m, suc(r))
 
         % induction
       , ∀ b ([∀ k (∃ c Plus(k, b, c) ==> ∃ c Plus(suc(k), b, c))] ==> ∀ n ∃ c Plus(n, b, c))
-      , (∀ k (Plus(k, zero, k)) ==> Plus(suc(k), zero, suc(k))) ==> ∀ n Plus(n, zero, n)
+      , (∀ k (Plus(k, 0, k)) ==> Plus(suc(k), 0, suc(k))) ==> ∀ n Plus(n, 0, n)
 
-      , ∀ x Less(zero, suc(x))
+      , ∀ x Less(0, suc(x))
       , ∀ x y Less(x, y) ==> Less(suc(x), suc(y))
 
-      , Eq(zero, zero)
+      , Eq(0, 0)
       , ∀ k n Eq(k, n) ==> Eq(suc(k), suc(n)) .
 
 
 % this says that one is a natural number
-theorem one-is-nat: Nat(suc(zero)) .
+theorem one-is-nat: Nat(suc(0)) .
 
 
 % can not prove the following:
@@ -32,13 +33,13 @@ theorem some-nats : ∃ n Nat(n) .
 
 
 % can not prove the following:
-% theorem zero-is-not-nat : ¬Nat(zero) .
+% theorem 0-is-not-nat: ¬Nat(0) .
 
 % but can we prove the negation?
-theorem zero-is-nat : Nat(zero) .
+theorem 0-is-nat: Nat(0) .
 
 
-% theorem blah-is-not-zero: ¬Eq(zero, blah) .
+% theorem blah-is-not-0 : ¬Eq(0, blah) .
 
 
 % can not prove the following
@@ -59,29 +60,29 @@ theorem zero-is-nat : Nat(zero) .
 % But if the conclusion is not entailed by it
 % it seems to suffer from an issue tied to the fact that
 % functions are technically infinite.
-% There's `suc(zero)` and `suc(suc(zero))` and `suc(suc(suc(zero)))`
+% There's `suc(0)` and `suc(suc(0))` and `suc(suc(suc(0)))`
 % and so on.
 % The resolution seems to keep generating those without a chance for stopping.
 
 
 
 % LESS
-theorem zero-is-less-than-two : Less(zero, suc(suc(zero))) .
+theorem 0-is-less-than-two: Less(0, suc(suc(0))) .
 
-theorem one-is-less-than-three: Less(suc(zero), suc(suc(suc(zero)))) .
-
-
-% OK
-theorem zero-plus-one-is-one: Plus(zero, suc(zero), suc(zero)) .
+theorem one-is-less-than-three: Less(suc(0), suc(suc(suc(0)))) .
 
 
 % OK
-theorem n-plus-1-is-suc-n : ∀ n Plus(suc(zero), n, suc(n)) .
+theorem 0-plus-one-is-one : Plus(0, suc(0), suc(0)) .
 
 
-theorem sum-zero-rhs: ∀ n Plus(n, zero, n) .
+% OK
+theorem n-plus-1-is-suc-n : ∀ n Plus(suc(0), n, suc(n)) .
 
-theorem induct0: ∀ k (Plus(k, zero, k)) ==> Plus(suc(k), zero, suc(k)) .
+
+theorem sum-0-rhs : ∀ n Plus(n, 0, n) .
+
+theorem induct0 : ∀ k (Plus(k, 0, k)) ==> Plus(suc(k), 0, suc(k)) .
 
 
 theorem plus-is-total : ∀ m n ∃ o Plus(m, n, o) .

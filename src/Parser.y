@@ -43,6 +43,7 @@ import Syntax qualified as S
   'theorem'   { Token.Theorem }
   'constants' { Token.Constants }
   'axioms'    { Token.Axioms }
+  'aliases'   { Token.Aliases }
   ':'         { Token.Colon }
   '⊢'         { Token.Turnstile }
   '⊤'         { Token.Tautology }
@@ -73,8 +74,9 @@ import Syntax qualified as S
 
 %%
 
-Module      ::  { ([String], [Formula], [Theorem]) }
-            :   Constants Axioms Theorems   { ($1, $2, $3) }
+Module      ::  { ([String], [(String, Term)], [Formula], [Theorem]) }
+            :   Constants Aliases Axioms Theorems
+                                            { ($1, $2, $3, $4) }
 
 
 Constants   ::  { [String] }
@@ -83,6 +85,39 @@ Constants   ::  { [String] }
                                                 ; put s{ constants = $3 }
                                                 ; return $3 } }
             |   {-  empty   -}              { [] }
+
+
+Aliases     ::  { [(String, Term)] }
+            :   'aliases' ':' Alis '.'      { $3 }
+            |   {- empty -}                 { [] }
+
+
+Alis        ::  { [(String, Term)] }
+            :   Alias                       { [$1] }
+            |   Alias ',' Alis              { $1 : $3 }
+
+
+Alias       ::  { (String, Term) }
+            :   Ali '=' Term                {%  do
+                                                { s <- get
+                                                ; let aliases' = aliases s
+                                                ; put s{ aliases = ($1, $3) : aliases' }
+                                                ; return ($1, $3) } }
+
+
+Ali         ::  { String }
+            :   Constant                    {%  do
+                                                { s <- get
+                                                ; let consts = constants s
+                                                ; let alis = aliases s
+                                                ; col'now <- gets (ai'col'no . lexer'input)
+                                                ; l'no <- gets (ai'line'no . lexer'input)
+                                                ; let col'no = col'now - (List.length $1)
+                                                ; if $1 `elem` consts
+                                                  then do { throwError ("Parsing Error: Illegal alias `" ++ $1 ++ "' on line " ++ show l'no ++ " column " ++ show col'no ++ ".\nAliases can not redefine existing constants.", col'no) }
+                                                  else  case List.lookup $1 alis of
+                                                        { Just _ -> do { throwError ("Parsing Error: Illegal alias `" ++ $1 ++ "' on line " ++ show l'no ++ " column " ++ show col'no ++ ".\nAliases can not redefine existing aliases.", col'no) }
+                                                        ; Nothing -> do { return $1 } } } }
 
 
 Consts      ::  { [String] }
@@ -194,47 +229,57 @@ TArgsSep    ::  { [Term] }
 Term        ::  { Term }
             :   NUMBER                      {%  do
                                                 { consts <- gets constants
+                                                ; alis <- gets aliases
                                                 ; col'now <- gets (ai'col'no . lexer'input)
                                                 ; l'no <- gets (ai'line'no . lexer'input)
                                                 ; let col'no = col'now - List.length $1
                                                 ; if $1 `elem` consts
                                                   then return (Fn $1 [])
-                                                  else throwError ("Parsing Error: Unknown numeric constant `" ++ $1 ++ "' on line " ++ show l'no ++ " column " ++ show col'no ++ ".", col'no) } }
+                                                  else  case List.lookup $1 alis of
+                                                        { Just tm -> do { return tm }
+                                                        ; Nothing -> do { throwError ("Parsing Error: Unknown numeric constant `" ++ $1 ++ "' on line " ++ show l'no ++ " column " ++ show col'no ++ ".", col'no) } } } }
             |   NUMBER 'ᶜ'                  { Fn $1 [] }
             |   LOWER TermArgsM             {%  case $2 of
                                                 { Just terms -> return $! Fn $1 terms
                                                 ; Nothing -> do
                                                   { consts <- gets constants
+                                                  ; alis <- gets aliases
                                                   ; binders <- gets scope
                                                   ; col'now <- gets (ai'col'no . lexer'input)
                                                   ; l'no <- gets (ai'line'no . lexer'input)
                                                   ; let col'no = col'now - List.length $1
                                                   ; let is'constant = $1 `elem` consts
                                                   ; let is'bound = $1 `elem` binders
-                                                  ; if is'constant
-                                                    then return (Fn $1 [])
-                                                    else  if is'bound
-                                                          then return (Var $1)
-                                                          else throwError ("Parsing Error: Unbound variable `" ++ $1 ++ "' on line " ++ show l'no ++ " column " ++ show col'no ++ ".", col'no) } } }
-            
+                                                  ; if is'bound
+                                                    then return (Var $1)
+                                                    else  if is'constant
+                                                          then return (Fn $1 [])
+                                                          else  case List.lookup $1 alis of
+                                                                { Just tm -> do { return tm }
+                                                                ; Nothing -> do { throwError ("Parsing Error: Unbound variable `" ++ $1 ++ "' on line " ++ show l'no ++ " column " ++ show col'no ++ ".", col'no) } } } } }
+
             |   LOWER 'ᶜ' TermArgsM         { Fn $1 (fromMaybe [] $3) }
             |   UPPER TermArgsM             {%  case $2 of
                                                 { Just terms -> return $! Fn $1 terms
                                                 ; Nothing -> do
                                                   { consts <- gets constants
+                                                  ; alis <- gets aliases
                                                   ; col'now <- gets (ai'col'no . lexer'input)
                                                   ; l'no <- gets (ai'line'no . lexer'input)
                                                   ; let col'no = col'now - List.length $1
                                                   ; if $1 `elem` consts
-                                                    then return (Fn $1 [])
-                                                    else throwError ("Parsing Error: Unknown constant `" ++ $1 ++ "' on line " ++ show l'no ++ " column " ++ show col'no ++ ".", col'no) } } }
+                                                    then do { return (Fn $1 []) }
+                                                    else  case List.lookup $1 alis of
+                                                          { Just tm -> do { return tm }
+                                                          ; Nothing -> do { throwError ("Parsing Error: Unknown constant or alias `" ++ $1 ++ "' on line " ++ show l'no ++ " column " ++ show col'no ++ ".", col'no) } } } } }
+                                                    
             |   UPPER 'ᶜ' TermArgsM         { Fn $1 (fromMaybe [] $3) }
             |   '(' Term ')'                { $2 }
 
 
 {
 
-parse'module :: String -> Either (String, Int) ([String], [Formula], [Theorem])
+parse'module :: String -> Either (String, Int) ([String], [(String, Term)], [Formula], [Theorem])
 parse'module source = mapRight fst $! eval'parser parseModule source
 
 parse'theorems :: String -> Either (String, Int)  [Theorem]

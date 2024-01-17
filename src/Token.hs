@@ -13,6 +13,7 @@ data Token  = Upper'Var String
             | Theorem         --  theorem
             | Axioms          --  axioms
             | Constants       --  constants
+            | Aliases         --  aliases
             | Colon           --  :
             | Turnstile       --  ⊢
 

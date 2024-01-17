@@ -1,4 +1,8 @@
-constants: 0 .
+constants: zero, suc .
+
+
+aliases : 0 = zero
+        , 1 = suc(0) .
 
 
 axioms: ∀ n Plus(0, n, n)
@@ -7,35 +11,35 @@ axioms: ∀ n Plus(0, n, n)
       , ∀ n Times(0, n, 0)
       , ∀ n m r a [Times(n, m, r) ∧ Plus(r, m, a) ==> Times(suc(n), m, a)]
 
-      , Fact(0, suc(0))
+      , Fact(0, 1)
       , ∀ n pr r [Fact(n, pr) ∧ Times(suc(n), pr, r) ==> Fact(suc(n), r)]
       .
 
 
-theorem fact-0-is-one: Fact(0, suc(0)) .
+theorem fact-0-is-1: Fact(0, 1) .
 
-theorem fact-one-is-one : Fact(suc(0), suc(0)) .
+theorem fact-1-is-1 : Fact(1, 1) .
 
-theorem exists-fact-for-one : ∃ n Fact(n, suc(0)) .
+theorem exists-fact-for-1 : ∃ n Fact(n, 1) .
 
 % CAN'T  I guess it's just too many steps and too much memory.
-% theorem exists-fact-for-two : ∃ n Fact(suc(suc(n)), suc(suc(0))) .
+% theorem exists-fact-for-two : ∃ n Fact(suc(suc(n)), suc(1)) .
 
-theorem exists-sqr-rt-of-one: ∃ n Times(n, n, suc(0)) .
+theorem exists-sqr-rt-of-1: ∃ n Times(n, n, 1) .
 
-theorem exist-divisors-of-two : ∃ n m Times(n, m, suc(suc(0))) .
-
-
-% theorem exists-divisor-of-four: ∃ n Times(n, suc(suc(0)), suc(suc(suc(suc(0))))) .
-
-% theorem exists-sqr-rt-of-four : ∃ n Times(n, n, suc(suc(suc(suc(0))))) .
+theorem exist-divisors-of-two : ∃ n m Times(n, m, suc(1)) .
 
 
-% theorem fact-one-of : One(suc(0))
+% theorem exists-divisor-of-four: ∃ n Times(n, suc(1), suc(suc(suc(1)))) .
+
+% theorem exists-sqr-rt-of-four : ∃ n Times(n, n, suc(suc(suc(1)))) .
+
+
+% theorem fact-1-of:  One(1)
 %                     , ∀ n One(n) ==> 
 %                     , Zero(0)
 %                     , ∀ n Zero(n) ==> Zero(0)
-%                     ⊢ ∀ n Fact(n, suc(0)) ==> One(n) ∨ Zero(n) .
+%                     ⊢ ∀ n Fact(n, 1) ==> One(n) ∨ Zero(n) .
 
 
 % theorem exists-fact-for-six : ∃ n Fact(n, suc(suc(suc(suc(suc(suc(0))))))) .

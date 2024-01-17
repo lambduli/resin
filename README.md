@@ -28,10 +28,13 @@ They might look something like the following snippet:
 ```
 constants: zero .
 
-axioms: ∀ n (Nat(n)) ==> Nat(suc(n))
-      , Nat(zero) .
+aliases: 0 = zero
+       , 1 = suc(0) .
 
-theorem one-is-nat: Nat(suc(zero)) .
+axioms: ∀ n (Nat(n)) ==> Nat(suc(n))
+      , Nat(0) .
+
+theorem 1-is-nat: Nat(1) .
 
 theorem some-nats : ∃ n Nat(n) .
 
@@ -44,10 +47,11 @@ The syntax is quite simple.
 A file is split in three parts:
 
 - `constants`—so that you don't have to write `zero()` and so on,
+- `aliases`—a list of non-recursive lexical *rewrite rules*,
 - `axioms`—those formulae will be available to all the theorems in the file,
 - `theorems`—in general, they are in the shape of *entialment* but you can omit the assumptions part if there aren't any.
 
-Both `constants` and `axioms` sections must either define one or more constants or axioms or not be there at all.
+All the first three sections must either define one or more constants, axioms or aliases or not be there at all.
 
 
 ## Syntax
@@ -72,9 +76,9 @@ You don't have to use those, the following shows the groups of symbols with the 
 
 Resin differentiates between two types of identifiers—the ones used mainly for *object variables* and the ones used for *propositional variables* and for functions.
 
-> All variables can contain a few special symbols. However, those special symbols may only come after a letter. The special symbols are: `-`, `_`, `'`, and *any digit*.
+> All variables can contain a few special symbols. However, those special symbols may only come after a letter. The special symbols are: `-`, `_`, and `'`. The variable identifiers may technically start with a *digit* character (this is useful for the theorem names).
 
-When we write `∀ x P(f(x))`, the `x` is an *object variable*, the `P` is a *propositional variable* and the `f` is a function constant.
+When we write `∀ x P(f(x))`, the `x` is an *object variable*, the `P` is a *propositional variable* (or rather a constant) and the `f` is a function constant.
 
 The object variables need to begin with lower-case letter and the propositional variables (names for relations) need to begin with upper-case letter.
 
@@ -88,6 +92,11 @@ There is a special character `ᶜ` that can be written at the end of an identifi
 Example: `∃ x Prop(x, Sucᶜ(Zeroᶜ))`
 
 This can be especially useful in the REPL where you can't write a `constants` section. It also makes upper-case functions possible at all.
+
+
+### Aliases
+
+Only a quite restricted alias rules are allowed. A valid alias is a *constant* that means it does not have an argument list at the use-site—they must be fully applied. At the use-site, aliases can not go with the `ᶜ` modifier as that would not make sense. Aliases can be numbers.
 
 
 ### Numbers
@@ -170,6 +179,10 @@ The second book's chapters 7 - 9 contain a lot of information. The whole book is
   - [x] fix the R/R conflicts
   - [x] LOWER and UPPER followed by `ᶜ` is a constant
   - [x] make sure that the precedences work
+  - [ ] add support for lexical aliases
+    - [x] simple aliases: `0 := zero` and `1 := suc(zero)`
+    - [ ] "function" aliases: `1 + _` rewrites to `suc(zero)`
+          This kinda feels like it could generalize to arbitrary rewrite using some limited grammar. I don't know if I want this. So maybe I'll do with just the simple alias.
 - [x] Printing
   - [x] only put parens around if necessary
 - [x] REPL
